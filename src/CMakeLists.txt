@@ -69,7 +69,7 @@ install(FILES
 # --------------------
 # Install Fortran modules (.mod files)
 # --------------------
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod/
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/src/mod/
         DESTINATION include/fortest/mod
         FILES_MATCHING PATTERN "*.mod"
 )
@@ -82,10 +82,3 @@ install(EXPORT FortestTargets
         NAMESPACE Fortest::
         DESTINATION lib/cmake/Fortest
 )
-
-add_executable(main main.f90)
-set_target_properties(main PROPERTIES
-        LINKER_LANGUAGE Fortran
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-target_link_libraries(main PUBLIC fortest)
