@@ -54,13 +54,15 @@ install(TARGETS fortest cpp_fortest
 # Install headers
 # --------------------
 install(FILES
-        assert.hpp
-        c_assert.h
-        c_test_suite.h
-        fortest_logger.hpp
-        logging.hpp
-        test_suite.hpp
-        test_suite_registry.hpp
+        assert/assert.hpp
+        assert/c_assert.h
+        assert/g_assert.hpp
+        logging/logging.hpp
+        logging/g_logging.hpp
+        test_suite/test_suite.hpp
+        test_suite/test_suite_registry.hpp
+        test_suite/c_test_suite.h
+        utils/global_base.hpp
         DESTINATION include/fortest
 )
 
@@ -81,3 +83,9 @@ install(EXPORT FortestTargets
         DESTINATION lib/cmake/Fortest
 )
 
+add_executable(main main.f90)
+set_target_properties(main PROPERTIES
+        LINKER_LANGUAGE Fortran
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+target_link_libraries(main PUBLIC fortest)
