@@ -1,5 +1,6 @@
 #ifndef GLOBAL_BASE_HPP
 #define GLOBAL_BASE_HPP
+#include <memory>
 template<typename Derived>
 class SingletonBase {
 public:

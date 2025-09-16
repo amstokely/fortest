@@ -5,18 +5,13 @@
 
 #include "g_assert.hpp"
 #include "g_logging.hpp"
-#include "test_suite_registry.hpp"
+#include "g_test_session.hpp"
 
 extern "C" {
 void c_register_test_suite(
     const char *name
 ) {
-    auto assert = GlobalConsoleAssert::instance();
-    TestSuiteRegistry::instance().try_emplace(
-        name, TestSuite(
-            name, *assert
-        )
-    );
+    GlobalConsoleTestSession::instance().add_test_suite(name);
 }
 
 void c_register_fixture(
@@ -26,8 +21,7 @@ void c_register_fixture(
     auto setup = reinterpret_cast<void(*)(void *)>(setup_ptr);
     auto teardown = reinterpret_cast<void(*)(void *)>(teardown_ptr);
     try {
-        auto &suite = TestSuiteRegistry::instance().at(suite_name);
-        suite.add_fixture(Fixture(setup, teardown, args_ptr, scope));
+        GlobalConsoleTestSession::instance().add_fixture(Fixture(setup, teardown, args_ptr, scope));
     } catch (const std::out_of_range &) {
         GlobalConsoleLogger::instance()->log(
             "Test suite not found: " + std::string(suite_name), "ERROR"
@@ -40,8 +34,7 @@ void c_register_test(
 ) {
     auto test = reinterpret_cast<void(*)(void *, void *, void *)>(test_ptr);
     try {
-        auto &suite = TestSuiteRegistry::instance().at(suite_name);
-        suite.add_test(test_name, test);
+        GlobalConsoleTestSession::instance().add_test(suite_name, test_name, test);
     } catch (const std::out_of_range &) {
         GlobalConsoleLogger::instance()->log(
             "Test suite not found: " + std::string(suite_name), "ERROR"
@@ -51,11 +44,11 @@ void c_register_test(
 
 void c_run_test_suite(const char *name) {
     try {
-        auto &suite = TestSuiteRegistry::instance().at(name);
         GlobalConsoleLogger::instance()->log(
             "Running test suite: " + std::string(name), "INFO"
         );
-        suite.run(GlobalConsoleLogger::instance());
+        auto logger = GlobalConsoleLogger::instance();
+        GlobalConsoleTestSession::instance().run(logger);
     } catch (const std::out_of_range &) {
         GlobalConsoleLogger::instance()->log(
             "Test suite not found: " + std::string(name), "ERROR"

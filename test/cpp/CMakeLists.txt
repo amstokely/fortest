@@ -5,7 +5,8 @@ FETCHCONTENT_DECLARE(
 )
 FETCHCONTENT_MAKEAVAILABLE(googletest)
 
-add_executable(test_assert assert.test.cpp)
+add_executable(test_assert assert.test.cpp
+        test_session.test.cpp)
 target_link_libraries(test_assert PUBLIC GTest::gtest_main GTest::gmock cpp_fortest)
 add_test(NAME test_assert COMMAND test_assert)
 
@@ -16,3 +17,11 @@ add_test(NAME test_logging COMMAND test_logging)
 add_executable(test_test_suite test_suite.test.cpp)
 target_link_libraries(test_test_suite PUBLIC GTest::gtest_main GTest::gmock cpp_fortest)
 add_test(NAME test_test_suite COMMAND test_test_suite)
+
+add_executable(test_test test.test.cpp)
+target_link_libraries(test_test PUBLIC GTest::gtest_main GTest::gmock cpp_fortest)
+add_test(NAME test_test COMMAND test_test)
+
+add_executable(test_test_session test_session.test.cpp)
+target_link_libraries(test_test_session PUBLIC GTest::gtest_main GTest::gmock cpp_fortest)
+add_test(NAME test_test_session COMMAND test_test_session)

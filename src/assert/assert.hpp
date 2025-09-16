@@ -26,10 +26,10 @@ public:
         const auto actual_str   = to_string_repr(actual);
 
         if (expected == actual) {
-//            logger->log("expected == actual (" + expected_str + ")", "TRUE");
+            logger->log("expected == actual (" + expected_str + ")", "TRUE");
             ++m_num_passed;
         } else {
-//            logger->log("expected: " + expected_str + ", actual: " + actual_str, "FALSE");
+            logger->log("expected: " + expected_str + ", actual: " + actual_str, "FALSE");
             ++m_num_failed;
         }
     }
@@ -41,30 +41,30 @@ public:
         const auto actual_str   = to_string_repr(actual);
 
         if (expected != actual) {
-//            logger->log("expected != actual (" + expected_str + ")", "TRUE");
+            logger->log("expected != actual (" + expected_str + ")", "TRUE");
             ++m_num_passed;
         } else {
-//            logger->log("expected: " + expected_str + ", actual: " + actual_str, "FALSE");
+            logger->log("expected: " + expected_str + ", actual: " + actual_str, "FALSE");
             ++m_num_failed;
         }
     }
 
     void assert_true(bool condition, const std::shared_ptr<Logger>& logger) {
         if (condition) {
-//            logger->log("condition is TRUE", "TRUE");
+            logger->log("condition is TRUE", "TRUE");
             ++m_num_passed;
         } else {
-//            logger->log("condition is FALSE", "FALSE");
+            logger->log("condition is FALSE", "FALSE");
             ++m_num_failed;
         }
     }
 
     void assert_false(bool condition, const std::shared_ptr<Logger>& logger) {
         if (!condition) {
-//            logger->log("condition is FALSE", "TRUE");
+            logger->log("condition is FALSE", "TRUE");
             ++m_num_passed;
         } else {
-//            logger->log("condition is TRUE", "FALSE");
+            logger->log("condition is TRUE", "FALSE");
             ++m_num_failed;
         }
     }

@@ -1,0 +1,4 @@
+#ifndef FORTEST_TEST_HPP
+#define FORTEST_TEST_HPP
+
+#endif //FORTEST_TEST_HPP

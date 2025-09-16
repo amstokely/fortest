@@ -11,11 +11,11 @@ public:
     explicit OStreamLogger(std::ostream &out) : ConsoleLogger(out) {}
 };
 
-class TestSuiteFixture : public ::testing::Test {
+class TestSessionFixture : public ::testing::Test {
 protected:
     std::ostringstream buffer;
     std::shared_ptr<OStreamLogger> logger;
-    Assert<ConsoleLogger> assert_obj;  // for TestSuite
+    Assert<OStreamLogger> assert_obj;  // for TestSuite
 
     void SetUp() override {
         logger = std::make_shared<OStreamLogger>(buffer);
@@ -32,7 +32,7 @@ protected:
     }
 };
 
-TEST_F(TestSuiteFixture, FixtureSetupAndTeardownAreCalled) {
+TEST_F(TestSessionFixture, FixtureSetupAndTeardownAreCalled) {
     bool setup_called = false;
     bool teardown_called = false;
     auto setup = [&](void *) { setup_called = true; };
@@ -47,12 +47,12 @@ TEST_F(TestSuiteFixture, FixtureSetupAndTeardownAreCalled) {
     EXPECT_EQ(f.get_scope(), "test");
 }
 
-TEST_F(TestSuiteFixture, AddAndGetName) {
+TEST_F(TestSessionFixture, AddAndGetName) {
     TestSuite ts("MySuite", assert_obj);
     EXPECT_EQ(ts.get_name(), "MySuite");
 }
 
-TEST_F(TestSuiteFixture, AddAndRunSingleTestPasses) {
+TEST_F(TestSessionFixture, AddAndRunSingleTestPasses) {
     TestSuite ts("SimpleSuite", assert_obj);
 
     // Add a test that does nothing (no failures)
@@ -66,7 +66,7 @@ TEST_F(TestSuiteFixture, AddAndRunSingleTestPasses) {
     EXPECT_EQ(assert_obj.get_num_failed(), 0);
 }
 
-TEST_F(TestSuiteFixture, AddAndRunTestFailsWhenAssertFails) {
+TEST_F(TestSessionFixture, AddAndRunTestFailsWhenAssertFails) {
     TestSuite ts("FailSuite", assert_obj);
 
     ts.add_test("failing_test", [&](void*, void*, void*) {
@@ -81,7 +81,7 @@ TEST_F(TestSuiteFixture, AddAndRunTestFailsWhenAssertFails) {
     EXPECT_EQ(assert_obj.get_num_failed(), 1);
 }
 
-TEST_F(TestSuiteFixture, SuiteFixtureSetupAndTeardownAreCalled) {
+TEST_F(TestSessionFixture, SuiteFixtureSetupAndTeardownAreCalled) {
     bool setup_called = false;
     bool teardown_called = false;
 

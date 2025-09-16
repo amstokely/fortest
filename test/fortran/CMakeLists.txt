@@ -1,0 +1,4 @@
+add_executable(test_test_suite_fortran test_suite.test.f90)
+set_target_properties(test_test_suite_fortran PROPERTIES LINKER_LANGUAGE Fortran)
+target_link_libraries(test_test_suite_fortran PUBLIC fortest)
+add_test(NAME test_test_suite_fortran COMMAND test_test_suite_fortran)

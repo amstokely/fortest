@@ -4,10 +4,9 @@
 add_library(cpp_fortest SHARED
         test_suite/test_suite.cpp
         assert/assert.cpp
-        assert/c_assert.cpp
         logging/logging.cpp
-        test_suite/test_suite_registry.cpp
-        test_suite/c_test_suite.cpp
+        test/test.hpp
+        test_session/test_session.hpp
 )
 
 target_include_directories(cpp_fortest
@@ -15,9 +14,24 @@ target_include_directories(cpp_fortest
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/assert>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/logging>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_suite>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_session>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/utils>
         $<INSTALL_INTERFACE:include/fortest>)
 
+add_library(c_fortest SHARED
+        assert/c_assert.cpp
+        test_suite/c_test_suite.cpp
+        test_session/g_test_session.cpp
+)
+target_include_directories(c_fortest
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/assert>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/logging>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_suite>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_session>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/utils>
+        $<INSTALL_INTERFACE:include/fortest>)
+target_link_libraries(c_fortest PUBLIC cpp_fortest)
 
 # --------------------
 # Fortran side
@@ -32,7 +46,7 @@ set_target_properties(fortest PROPERTIES
         Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/src/mod
 )
 target_link_libraries(fortest
-        PUBLIC cpp_fortest           # and on cpp_fortest directly
+        PUBLIC c_fortest           # and on cpp_fortest directly
 )
 target_include_directories(fortest
         INTERFACE
@@ -43,7 +57,7 @@ target_include_directories(fortest
 # --------------------
 # Install libraries and export targets
 # --------------------
-install(TARGETS fortest cpp_fortest
+install(TARGETS fortest cpp_fortest c_fortest
         EXPORT FortestTargets
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
@@ -62,6 +76,7 @@ install(FILES
         test_suite/test_suite.hpp
         test_suite/test_suite_registry.hpp
         test_suite/c_test_suite.h
+        test_session/test_session.hpp
         utils/global_base.hpp
         DESTINATION include/fortest
 )
