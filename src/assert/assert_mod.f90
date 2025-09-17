@@ -121,7 +121,7 @@ contains
 
    subroutine assert_not_equal_string(expected, actual)
       implicit none
-      character(len = :), allocatable :: expected, actual
+      character(len = *) :: expected, actual
       type(f_c_string_t) :: f_c_string_expected, f_c_string_actual
       integer :: status
       interface

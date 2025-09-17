@@ -29,6 +29,8 @@ module test_suite_mod
       procedure :: register_fixture => register_fixture
       procedure :: register_test => register_test
       procedure :: run => run
+      procedure :: get_status => get_status
+      procedure, public :: finalize
    end type test_suite_t
 
 contains
@@ -139,5 +141,33 @@ contains
       status = f_c_string_name%to_c()
       call c_run_test_suite(f_c_string_name%get_c_string())
    end subroutine run
+
+   function get_status(this) result(status)
+      use iso_c_binding
+      use f_c_string_t_mod, only: f_c_string_t
+      implicit none
+      class(test_suite_t), intent(in) :: this
+      integer :: status, ierr
+      type (f_c_string_t) :: f_c_string_name
+      interface
+         function c_get_test_suite_status(name) bind(C, name = "c_get_test_suite_status")
+            import :: c_ptr
+            type(c_ptr), value :: name
+            integer :: c_get_test_suite_status
+         end function c_get_test_suite_status
+      end interface
+      f_c_string_name = f_c_string_t(this%name)
+      ierr = f_c_string_name%to_c()
+      status = c_get_test_suite_status(f_c_string_name%get_c_string())
+   end function get_status
+
+   subroutine finalize(this)
+      implicit none
+      class(test_suite_t), intent(in) :: this
+      integer :: status
+
+      status = this%get_status()
+      call exit(status)
+   end subroutine finalize
 
 end module test_suite_mod

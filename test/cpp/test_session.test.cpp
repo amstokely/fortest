@@ -6,9 +6,9 @@
 using ::testing::HasSubstr;
 
 // A simple logger for testing that writes into an ostringstream
-class OStreamLogger : public ConsoleLogger {
+class OStreamLogger : public Logger {
 public:
-    explicit OStreamLogger(std::ostream &out) : ConsoleLogger(out) {}
+    explicit OStreamLogger(std::ostream &out) : Logger(out) {}
 };
 
 class TestSessionFixture : public ::testing::Test {

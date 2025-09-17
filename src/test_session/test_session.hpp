@@ -85,6 +85,17 @@ public:
 
         logger->log("Finished test session: ", "INFO");
     }
+
+    [[nodiscard]] std::unordered_map<std::string, Test::Status> get_test_suite_status(const std::string &suite_name) const {
+        auto it = m_suites.find(suite_name);
+        if (it == m_suites.end()) {
+            throw std::runtime_error(
+                "Suite '" + suite_name +
+                "' does not exist in session '"
+            );
+        }
+        return it->second->get_statuses();
+    }
 };
 
 #endif //FORTEST_TEST_SESSION_HPP

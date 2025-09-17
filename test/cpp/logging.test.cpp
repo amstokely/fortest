@@ -4,11 +4,12 @@
 #include <sstream>
 
 using ::testing::HasSubstr;
+using ::testing::Not;
 
 class ConsoleLoggerTest : public ::testing::Test {
 protected:
     std::ostringstream buffer;
-    ConsoleLogger logger{buffer};  // inject test buffer
+    Logger logger{buffer};  // inject test buffer
 
     std::string get_output() {
         return buffer.str();
@@ -20,60 +21,103 @@ protected:
     }
 };
 
+// -----------------------------------------------------------------------------
+// Tag behavior
+// -----------------------------------------------------------------------------
 TEST_F(ConsoleLoggerTest, LogPass) {
     logger.log("all good", "PASS");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("[PASS] all good"));
-    EXPECT_THAT(out, HasSubstr("\033[32m"));  // green
+    EXPECT_THAT(out, HasSubstr("\033[32m"));  // green present
 
     std::ostringstream oss;
     oss << logger;
     EXPECT_EQ(oss.str(), "[PASS] all good");
 }
 
-
 TEST_F(ConsoleLoggerTest, LogFail) {
     logger.log("something broke", "FAIL");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("[FAIL] something broke"));
-    EXPECT_THAT(out, HasSubstr("\033[31m"));  // red
+    EXPECT_THAT(out, HasSubstr("\033[31m"));  // red present
 }
 
 TEST_F(ConsoleLoggerTest, LogInfo) {
     logger.log("details", "INFO");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("[INFO] details"));
-    EXPECT_THAT(out, HasSubstr("\033[0m"));   // default reset
+    EXPECT_THAT(out, HasSubstr("\033[0m"));   // reset present
 }
 
 TEST_F(ConsoleLoggerTest, LogTrue) {
     logger.log("condition ok", "TRUE");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("[TRUE] condition ok"));
-    EXPECT_THAT(out, HasSubstr("\033[32m"));  // green
+    EXPECT_THAT(out, HasSubstr("\033[32m"));  // green present
 }
 
 TEST_F(ConsoleLoggerTest, LogFalse) {
     logger.log("condition bad", "FALSE");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("[FALSE] condition bad"));
-    EXPECT_THAT(out, HasSubstr("\033[31m"));  // red
+    EXPECT_THAT(out, HasSubstr("\033[31m"));  // red present
 }
 
 TEST_F(ConsoleLoggerTest, LogUnknownTagPrintsRawMessage) {
     logger.log("just text", "OTHER");
-    std::string out = get_output();
-    EXPECT_EQ(out, "just text\n");
+    EXPECT_EQ(get_output(), "just text\n");
 }
 
+TEST_F(ConsoleLoggerTest, LogEmptyTagPrintsRawMessage) {
+    logger.log("raw", "");
+    EXPECT_EQ(get_output(), "raw\n");
+}
+
+TEST_F(ConsoleLoggerTest, LowercaseTagDoesNotFormat) {
+    logger.log("case check", "pass");
+    EXPECT_EQ(get_output(), "case check\n");
+}
+
+// -----------------------------------------------------------------------------
+// Border behavior
+// -----------------------------------------------------------------------------
 TEST_F(ConsoleLoggerTest, BorderIsPrintedAroundMessage) {
-    ConsoleLogger border_logger(buffer, "====", Color::DEFAULT);
+    Logger border_logger(buffer, "====", Color::DEFAULT);
     border_logger.log("border test", "INFO");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("===="));
     EXPECT_THAT(out, HasSubstr("[INFO] border test"));
 }
 
+TEST_F(ConsoleLoggerTest, BorderAppliedForEveryMessage) {
+    Logger border_logger(buffer, "****");
+    border_logger.log("first", "PASS");
+    border_logger.log("second", "FAIL");
+
+    std::string out = get_output();
+
+    // Borders appear
+    EXPECT_THAT(out, HasSubstr("****"));
+    // Messages are present
+    EXPECT_THAT(out, HasSubstr("[PASS] first"));
+    EXPECT_THAT(out, HasSubstr("[FAIL] second"));
+    // Colors are present
+    EXPECT_THAT(out, HasSubstr("\033[32m"));  // green
+    EXPECT_THAT(out, HasSubstr("\033[31m"));  // red
+}
+
+TEST_F(ConsoleLoggerTest, EmptyBorderDoesNotPrintBorder) {
+    Logger no_border_logger(buffer, "");
+    no_border_logger.log("no border", "INFO");
+
+    std::string out = get_output();
+    EXPECT_THAT(out, Not(HasSubstr("====")));
+    EXPECT_THAT(out, HasSubstr("[INFO] no border"));
+}
+
+// -----------------------------------------------------------------------------
+// Operator<< behavior
+// -----------------------------------------------------------------------------
 TEST_F(ConsoleLoggerTest, OperatorStreamOutputsLastMessage) {
     logger.log("stream test", "INFO");
     std::ostringstream oss;
@@ -82,19 +126,66 @@ TEST_F(ConsoleLoggerTest, OperatorStreamOutputsLastMessage) {
 }
 
 TEST_F(ConsoleLoggerTest, OperatorStreamWhenNoMessage) {
-    ConsoleLogger empty_logger(buffer);
+    Logger empty_logger(buffer);
     std::ostringstream oss;
     oss << empty_logger;
     EXPECT_EQ(oss.str(), "(no log yet)");
 }
 
+TEST_F(ConsoleLoggerTest, OperatorStreamShowsLastMessageOnly) {
+    logger.log("first", "INFO");
+    logger.log("second", "FAIL");
+
+    std::ostringstream oss;
+    oss << logger;
+    EXPECT_EQ(oss.str(), "[FAIL] second");
+}
+
+// -----------------------------------------------------------------------------
+// Output integrity
+// -----------------------------------------------------------------------------
+TEST_F(ConsoleLoggerTest, EachMessageEndsWithReset) {
+    logger.log("colored", "PASS");
+    std::string out = get_output();
+    EXPECT_THAT(out, HasSubstr("\033[0m"));  // reset code exists
+    EXPECT_TRUE(out.ends_with("\n"));
+}
+
+TEST_F(ConsoleLoggerTest, MultipleLogsAccumulateOutput) {
+    logger.log("first", "INFO");
+    logger.log("second", "PASS");
+
+    std::string out = get_output();
+    EXPECT_THAT(out, HasSubstr("[INFO] first"));
+    EXPECT_THAT(out, HasSubstr("[PASS] second"));
+}
+
+TEST(ConsoleLoggerIsolationTest, InstancesKeepIndependentState) {
+    std::ostringstream buf1, buf2;
+    Logger logger1(buf1);
+    Logger logger2(buf2);
+
+    logger1.log("one", "PASS");
+    logger2.log("two", "FAIL");
+
+    std::ostringstream oss1, oss2;
+    oss1 << logger1;
+    oss2 << logger2;
+
+    EXPECT_EQ(oss1.str(), "[PASS] one");
+    EXPECT_EQ(oss2.str(), "[FAIL] two");
+}
+
+// -----------------------------------------------------------------------------
+// Color utility
+// -----------------------------------------------------------------------------
 TEST(ConsoleLoggerColorTest, ColorToCodeReturnsCorrectEscapeCodes) {
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::RED),     "\033[31m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::GREEN),   "\033[32m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::YELLOW),  "\033[33m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::BLUE),    "\033[34m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::MAGENTA), "\033[35m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::CYAN),    "\033[36m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::WHITE),   "\033[37m");
-    EXPECT_EQ(ConsoleLogger::color_to_code(Color::DEFAULT), "\033[0m");
+    EXPECT_EQ(Logger::color_to_code(Color::RED),     "\033[31m");
+    EXPECT_EQ(Logger::color_to_code(Color::GREEN),   "\033[32m");
+    EXPECT_EQ(Logger::color_to_code(Color::YELLOW),  "\033[33m");
+    EXPECT_EQ(Logger::color_to_code(Color::BLUE),    "\033[34m");
+    EXPECT_EQ(Logger::color_to_code(Color::MAGENTA), "\033[35m");
+    EXPECT_EQ(Logger::color_to_code(Color::CYAN),    "\033[36m");
+    EXPECT_EQ(Logger::color_to_code(Color::WHITE),   "\033[37m");
+    EXPECT_EQ(Logger::color_to_code(Color::DEFAULT), "\033[0m");
 }

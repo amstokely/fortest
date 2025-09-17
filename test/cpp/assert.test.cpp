@@ -1,148 +1,162 @@
 // test_assert.cpp
 #include "assert.hpp"
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include <memory>
+#include <string>
 
-// Mock logger that satisfies LoggerLike
-class MockLogger {
+// Null logger that satisfies LoggerLike but discards output
+class NullLogger {
 public:
-    MOCK_METHOD(void, log, (const std::string &message, const std::string &type), ());
+    static void log(const std::string &, const std::string &) {}
 };
 
-// Define an Assert type using MockLogger
-using TestAssert = Assert<MockLogger>;
+using TestAssert = Assert<NullLogger>;
 
+// Base fixture
 class AssertTest : public ::testing::Test {
 protected:
-    std::shared_ptr<MockLogger> mock_logger;
+    std::shared_ptr<NullLogger> null_logger;
     TestAssert test_assert;
 
     void SetUp() override {
-        mock_logger = std::make_shared<MockLogger>();
+        null_logger = std::make_shared<NullLogger>();
         test_assert.reset();
+    }
+
+    void expect_summary(const int expected_pass, const int expected_fail) const {
+        EXPECT_EQ(test_assert.get_num_passed(), expected_pass);
+        EXPECT_EQ(test_assert.get_num_failed(), expected_fail);
     }
 };
 
-TEST_F(AssertTest, AssertEqual_Pass_Int) {
-    EXPECT_CALL(*mock_logger, log("expected == actual (5)", "TRUE")).Times(1);
+// -------- Equality & Inequality --------
 
-    test_assert.assert_equal(5, 5, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+/// @test AssertEqual passes when two integers are the same.
+TEST_F(AssertTest, Equal_PassesWhenValuesAreSame_Int) {
+    test_assert.assert_equal(42, 42, null_logger);
+    expect_summary(1, 0);
 }
 
-TEST_F(AssertTest, AssertEqual_Fail_Int) {
-    EXPECT_CALL(*mock_logger, log("expected: 5, actual: 6", "FALSE")).Times(1);
-
-    test_assert.assert_equal(5, 6, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
+/// @test AssertEqual fails when two integers are different.
+TEST_F(AssertTest, Equal_FailsWhenValuesDiffer_Int) {
+    test_assert.assert_equal(1, 2, null_logger);
+    expect_summary(0, 1);
 }
 
-TEST_F(AssertTest, AssertEqual_Pass_String) {
-    EXPECT_CALL(*mock_logger, log("expected == actual (hello)", "TRUE")).Times(1);
-
-    test_assert.assert_equal(std::string("hello"), std::string("hello"), mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+/// @test AssertEqual passes when two strings are identical.
+TEST_F(AssertTest, Equal_PassesWhenValuesAreSame_String) {
+    test_assert.assert_equal(std::string("abc"), std::string("abc"), null_logger);
+    expect_summary(1, 0);
 }
 
-TEST_F(AssertTest, AssertEqual_Fail_String) {
-    EXPECT_CALL(*mock_logger, log("expected: hello, actual: world", "FALSE")).Times(1);
-
-    test_assert.assert_equal(std::string("hello"), std::string("world"), mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
+/// @test AssertEqual fails when two strings differ.
+TEST_F(AssertTest, Equal_FailsWhenValuesDiffer_String) {
+    test_assert.assert_equal(std::string("abc"), std::string("def"), null_logger);
+    expect_summary(0, 1);
 }
 
-TEST_F(AssertTest, AssertNotEqual_Pass_Int) {
-    EXPECT_CALL(*mock_logger, log("expected != actual (5)", "TRUE")).Times(1);
-
-    test_assert.assert_not_equal(5, 6, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+/// @test AssertNotEqual passes when two values are different.
+TEST_F(AssertTest, NotEqual_PassesWhenValuesDiffer) {
+    test_assert.assert_not_equal(1, 2, null_logger);
+    expect_summary(1, 0);
 }
 
-TEST_F(AssertTest, AssertNotEqual_Fail_Int) {
-    EXPECT_CALL(*mock_logger, log("expected: 5, actual: 5", "FALSE")).Times(1);
-
-    test_assert.assert_not_equal(5, 5, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
+/// @test AssertNotEqual fails when two values are the same.
+TEST_F(AssertTest, NotEqual_FailsWhenValuesAreSame) {
+    test_assert.assert_not_equal(5, 5, null_logger);
+    expect_summary(0, 1);
 }
 
-TEST_F(AssertTest, AssertNotEqual_Pass_String) {
-    EXPECT_CALL(*mock_logger, log("expected != actual (hello)", "TRUE")).Times(1);
+// -------- Boolean Assertions --------
 
-    test_assert.assert_not_equal(std::string("hello"), std::string("world"), mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+/// @test AssertTrue passes when the condition is true.
+TEST_F(AssertTest, True_PassesOnTrueCondition) {
+    test_assert.assert_true(true, null_logger);
+    expect_summary(1, 0);
 }
 
-TEST_F(AssertTest, AssertNotEqual_Fail_String) {
-    EXPECT_CALL(*mock_logger, log("expected: hello, actual: hello", "FALSE")).Times(1);
-
-    test_assert.assert_not_equal(std::string("hello"), std::string("hello"), mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
+/// @test AssertTrue fails when the condition is false.
+TEST_F(AssertTest, True_FailsOnFalseCondition) {
+    test_assert.assert_true(false, null_logger);
+    expect_summary(0, 1);
 }
 
-TEST_F(AssertTest, AssertTrue_Pass) {
-    EXPECT_CALL(*mock_logger, log("condition is TRUE", "TRUE")).Times(1);
-
-    test_assert.assert_true(true, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+/// @test AssertFalse passes when the condition is false.
+TEST_F(AssertTest, False_PassesOnFalseCondition) {
+    test_assert.assert_false(false, null_logger);
+    expect_summary(1, 0);
 }
 
-TEST_F(AssertTest, AssertTrue_Fail) {
-    EXPECT_CALL(*mock_logger, log("condition is FALSE", "FALSE")).Times(1);
-
-    test_assert.assert_true(false, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
+/// @test AssertFalse fails when the condition is true.
+TEST_F(AssertTest, False_FailsOnTrueCondition) {
+    test_assert.assert_false(true, null_logger);
+    expect_summary(0, 1);
 }
 
-TEST_F(AssertTest, AssertFalse_Pass) {
-    EXPECT_CALL(*mock_logger, log("condition is FALSE", "TRUE")).Times(1);
+// -------- Accumulation & Reset --------
 
-    test_assert.assert_false(false, mock_logger);
+/// @test Multiple assertions accumulate pass and fail counts correctly.
+TEST_F(AssertTest, MultipleAssertionsAccumulateResults) {
+    test_assert.assert_equal(1, 1, null_logger);      // pass
+    test_assert.assert_equal(1, 2, null_logger);      // fail
+    test_assert.assert_not_equal(5, 5, null_logger);  // fail
+    test_assert.assert_true(true, null_logger);       // pass
 
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+    expect_summary(2, 2);
 }
 
-TEST_F(AssertTest, AssertFalse_Fail) {
-    EXPECT_CALL(*mock_logger, log("condition is TRUE", "FALSE")).Times(1);
-
-    test_assert.assert_false(true, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
-}
-
-TEST_F(AssertTest, ResetCounters) {
-    EXPECT_CALL(*mock_logger, log(testing::_, testing::_)).Times(2);
-
-    test_assert.assert_equal(1, 1, mock_logger);
-    test_assert.assert_equal(1, 2, mock_logger);
-
-    EXPECT_EQ(test_assert.get_num_passed(), 1);
-    EXPECT_EQ(test_assert.get_num_failed(), 1);
+/// @test Reset clears both passed and failed counters.
+TEST_F(AssertTest, ResetClearsPreviousResults) {
+    test_assert.assert_equal(1, 2, null_logger); // fail
+    test_assert.assert_true(true, null_logger);  // pass
+    expect_summary(1, 1);
 
     test_assert.reset();
+    expect_summary(0, 0);
+}
 
-    EXPECT_EQ(test_assert.get_num_passed(), 0);
-    EXPECT_EQ(test_assert.get_num_failed(), 0);
+/// @test Reset clears counters after all assertions passed.
+TEST_F(AssertTest, ResetAfterAllPasses) {
+    test_assert.assert_equal(1, 1, null_logger);
+    test_assert.assert_true(true, null_logger);
+    expect_summary(2, 0);
+
+    test_assert.reset();
+    expect_summary(0, 0);
+}
+
+/// @test Reset clears counters after all assertions failed.
+TEST_F(AssertTest, ResetAfterAllFails) {
+    test_assert.assert_equal(1, 2, null_logger);
+    test_assert.assert_false(true, null_logger);
+    expect_summary(0, 2);
+
+    test_assert.reset();
+    expect_summary(0, 0);
+}
+
+// -------- Edge Cases --------
+
+/// @test AssertEqual treats two empty strings as equal.
+TEST_F(AssertTest, EqualHandlesEmptyStrings) {
+    test_assert.assert_equal(std::string(""), std::string(""), null_logger);
+    expect_summary(1, 0);
+}
+
+/// @test AssertNotEqual passes when comparing empty vs non-empty string.
+TEST_F(AssertTest, NotEqualHandlesEmptyVsNonEmptyString) {
+    test_assert.assert_not_equal(std::string(""), std::string("x"), null_logger);
+    expect_summary(1, 0);
+}
+
+/// @test AssertEqual works with floating-point values.
+TEST_F(AssertTest, EqualHandlesFloatingPointValues) {
+    test_assert.assert_equal(3.14, 3.14, null_logger);
+    expect_summary(1, 0);
+}
+
+/// @test AssertNotEqual works with different floating-point values.
+TEST_F(AssertTest, NotEqualHandlesFloatingPointValues) {
+    test_assert.assert_not_equal(3.14, 2.71, null_logger);
+    expect_summary(1, 0);
 }

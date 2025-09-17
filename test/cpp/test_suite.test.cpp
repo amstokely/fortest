@@ -4,18 +4,20 @@
 #include <sstream>
 
 using ::testing::HasSubstr;
+using Fortest = Test;
 
 // A simple logger for testing that writes into an ostringstream
-class OStreamLogger : public ConsoleLogger {
+class OStreamLogger : public Logger {
 public:
-    explicit OStreamLogger(std::ostream &out) : ConsoleLogger(out) {}
+    explicit OStreamLogger(std::ostream &out) : Logger(out) {
+    }
 };
 
 class TestSessionFixture : public ::testing::Test {
 protected:
     std::ostringstream buffer;
     std::shared_ptr<OStreamLogger> logger;
-    Assert<OStreamLogger> assert_obj;  // for TestSuite
+    Assert<OStreamLogger> assert_obj; // for TestSuite
 
     void SetUp() override {
         logger = std::make_shared<OStreamLogger>(buffer);
@@ -56,7 +58,10 @@ TEST_F(TestSessionFixture, AddAndRunSingleTestPasses) {
     TestSuite ts("SimpleSuite", assert_obj);
 
     // Add a test that does nothing (no failures)
-    ts.add_test("empty_test", [](void*, void*, void*) {});
+    ts.add_test(
+        "empty_test", [](void *, void *, void *) {
+        }
+    );
 
     ts.run(logger);
 
@@ -66,12 +71,36 @@ TEST_F(TestSessionFixture, AddAndRunSingleTestPasses) {
     EXPECT_EQ(assert_obj.get_num_failed(), 0);
 }
 
+TEST_F(TestSessionFixture, GetStatuses) {
+    TestSuite ts("SimpleSuite", assert_obj);
+
+    // Add a test that does nothing (no failures)
+    ts.add_test(
+        "passing_test", [&](void *, void *, void *) {
+            assert_obj.assert_true(true, logger);
+        }
+    );
+    ts.add_test(
+        "failing_test", [&](void *, void *, void *) {
+            assert_obj.assert_true(false, logger);
+        }
+    );
+    ts.run(logger);
+    auto statuses = ts.get_statuses();
+    EXPECT_EQ(statuses.size(), 2);
+    EXPECT_EQ(statuses["passing_test"], Fortest::Status::PASS);
+    EXPECT_EQ(statuses["failing_test"], Fortest::Status::FAIL);
+
+}
+
 TEST_F(TestSessionFixture, AddAndRunTestFailsWhenAssertFails) {
     TestSuite ts("FailSuite", assert_obj);
 
-    ts.add_test("failing_test", [&](void*, void*, void*) {
-        assert_obj.assert_equal(1, 2, logger);  // should fail
-    });
+    ts.add_test(
+        "failing_test", [&](void *, void *, void *) {
+            assert_obj.assert_equal(1, 2, logger); // should fail
+        }
+    );
 
     ts.run(logger);
 
@@ -86,15 +115,17 @@ TEST_F(TestSessionFixture, SuiteFixtureSetupAndTeardownAreCalled) {
     bool teardown_called = false;
 
     Fixture suite_fixture(
-        [&](void*) { setup_called = true; },
-        [&](void*) { teardown_called = true; },
-        nullptr, "suite"
+        [&](void *) { setup_called = true; },
+        [&](void *) { teardown_called = true; }, nullptr, "suite"
     );
 
     TestSuite ts("WithSuiteFixture", assert_obj);
     ts.add_fixture(suite_fixture);
 
-    ts.add_test("dummy", [](void*, void*, void*) {});
+    ts.add_test(
+        "dummy", [](void *, void *, void *) {
+        }
+    );
 
     ts.run(logger);
 

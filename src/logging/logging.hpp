@@ -25,18 +25,54 @@ concept LoggerLike =
     };
 
 /// Default implementation: logs to a given std::ostream
-class ConsoleLogger {
+class Logger {
 public:
-    explicit ConsoleLogger(std::ostream &out = std::cout,
+    explicit Logger(std::ostream &out = std::cout,
                            std::string border = "",
-                           Color color = Color::DEFAULT);
+                           Color color = Color::DEFAULT)
+        : out_(out), border_(std::move(border)), color_(color) {}
 
-    void log(const std::string &msg, const std::string &tag);
+    void log(const std::string &msg, const std::string &tag) {
+        last_msg_ = msg;
+        last_tag_ = tag;
 
-    static std::string color_to_code(Color c);
+        if (tag == "PASS") {
+            log_with_format("PASS", msg, Color::GREEN);
+        } else if (tag == "FAIL") {
+            log_with_format("FAIL", msg, Color::RED);
+        } else if (tag == "INFO") {
+            log_with_format("INFO", msg, Color::DEFAULT);
+        } else if (tag == "TRUE") {
+            log_with_format("TRUE", msg, Color::GREEN);
+        } else if (tag == "FALSE") {
+            log_with_format("FALSE", msg, Color::RED);
+        } else {
+            out_ << msg << '\n';
+        }
+    }
+
+    static std::string color_to_code(Color c) {
+        switch (c) {
+            case Color::RED:     return "\033[31m";
+            case Color::GREEN:   return "\033[32m";
+            case Color::YELLOW:  return "\033[33m";
+            case Color::BLUE:    return "\033[34m";
+            case Color::MAGENTA: return "\033[35m";
+            case Color::CYAN:    return "\033[36m";
+            case Color::WHITE:   return "\033[37m";
+            default:             return "\033[0m";
+        }
+    }
 
     // stream insertion operator
-    friend std::ostream& operator<<(std::ostream &os, const ConsoleLogger &logger);
+    friend std::ostream& operator<<(std::ostream &os, const Logger &logger) {
+        if (!logger.last_tag_.empty()) {
+            os << "[" << logger.last_tag_ << "] " << logger.last_msg_;
+        } else {
+            os << "(no log yet)";
+        }
+        return os;
+    }
 
 private:
     std::ostream &out_;
@@ -49,7 +85,19 @@ private:
 
     void log_with_format(const std::string &label,
                          const std::string &msg,
-                         Color color);
+                         Color color) {
+        color_ = color;
+        std::string color_code = color_to_code(color_);
+        std::string reset_code = "\033[0m";
+
+        if (!border_.empty()) {
+            out_ << color_code << border_ << reset_code << '\n';
+        }
+        out_ << color_code << "[" << label << "] " << msg << reset_code << '\n';
+        if (!border_.empty()) {
+            out_ << color_code << border_ << reset_code << '\n';
+        }
+    }
 };
 
 #endif // LOGGING_HPP

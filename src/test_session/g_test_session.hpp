@@ -1,23 +1,25 @@
 #ifndef FORTEST_GLOBAL_TEST_SESSION_HPP
 #define FORTEST_GLOBAL_TEST_SESSION_HPP
 
+#include <g_logging.hpp>
+
 #include "test_session.hpp"
 #include "assert.hpp"
 #include "g_assert.hpp"
 
-class GlobalConsoleTestSession {
+class GlobalTestSession {
 public:
-    static TestSession<ConsoleLogger>& instance() {
-        static TestSession<ConsoleLogger> session(*GlobalConsoleAssert::instance());
+    static TestSession<Logger>& instance() {
+        static TestSession session(*GlobalAssert::instance());
         return session;
     }
 
 private:
-    GlobalConsoleTestSession() = default;
-    ~GlobalConsoleTestSession() = default;
+    GlobalTestSession() = default;
+    ~GlobalTestSession() = default;
 
-    GlobalConsoleTestSession(const GlobalConsoleTestSession&) = delete;
-    GlobalConsoleTestSession& operator=(const GlobalConsoleTestSession&) = delete;
+    GlobalTestSession(const GlobalTestSession&) = delete;
+    GlobalTestSession& operator=(const GlobalTestSession&) = delete;
 };
 
 #endif // FORTEST_GLOBAL_TEST_SESSION_HPP

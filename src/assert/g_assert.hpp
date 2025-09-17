@@ -6,14 +6,11 @@
 #include "global_base.hpp" // your SingletonBase class
 
 // GlobalAssert wraps Assert in a singleton
-template <LoggerLike Logger>
 class GlobalAssert : public Assert<Logger>,
-                     public SingletonBase<GlobalAssert<Logger>> {
+                     public SingletonBase<Assert<Logger>> {
 private:
-    friend class SingletonBase<GlobalAssert<Logger>>;
+    friend class SingletonBase<Assert<Logger>>;
     GlobalAssert() = default; // only SingletonBase can construct it
 };
-
-using GlobalConsoleAssert = GlobalAssert<ConsoleLogger>;
 
 #endif // G_ASSERT_HPP
