@@ -7,6 +7,7 @@ add_library(cpp_fortest SHARED
         logging/logging.cpp
         test/test.hpp
         test_session/test_session.hpp
+        fixture/fixture.hpp
 )
 
 target_include_directories(cpp_fortest
@@ -14,14 +15,16 @@ target_include_directories(cpp_fortest
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/assert>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/logging>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_suite>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_session>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/utils>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/fixture>
         $<INSTALL_INTERFACE:include/fortest>)
 
 add_library(c_fortest SHARED
         assert/c_assert.cpp
-        test_suite/c_test_suite.cpp
-        test_session/g_test_session.cpp
+        test_session/c_test_session.h
+        test_session/c_test_session.cpp
 )
 target_include_directories(c_fortest
         PUBLIC
@@ -38,8 +41,10 @@ target_link_libraries(c_fortest PUBLIC cpp_fortest)
 # --------------------
 add_library(fortest SHARED
         test_suite/test_suite_mod.f90
+        test_session/test_session_mod.f90
         assert/assert_mod.f90
         utils/f_c_string_t_mod.f90
+        utils/procedure_interfaces_mod.f90
 )
 set_target_properties(fortest PROPERTIES
         LINKER_LANGUAGE Fortran
@@ -74,10 +79,11 @@ install(FILES
         logging/logging.hpp
         logging/g_logging.hpp
         test_suite/test_suite.hpp
-        test_suite/test_suite_registry.hpp
-        test_suite/c_test_suite.h
+        test/test.hpp
         test_session/test_session.hpp
+        test_session/c_test_session.h
         utils/global_base.hpp
+        fixture/fixture.hpp
         DESTINATION include/fortest
 )
 

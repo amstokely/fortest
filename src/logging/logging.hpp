@@ -7,17 +7,6 @@
 #include <string>
 #include <utility>
 
-enum class Color {
-    DEFAULT,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE
-};
-
 template <typename T>
 concept LoggerLike =
     requires(T logger, const std::string &msg, const std::string &tag) {
@@ -27,6 +16,16 @@ concept LoggerLike =
 /// Default implementation: logs to a given std::ostream
 class Logger {
 public:
+    enum class Color {
+        DEFAULT,
+        RED,
+        GREEN,
+        YELLOW,
+        BLUE,
+        MAGENTA,
+        CYAN,
+        WHITE
+    };
     explicit Logger(std::ostream &out = std::cout,
                            std::string border = "",
                            Color color = Color::DEFAULT)

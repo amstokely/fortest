@@ -82,7 +82,7 @@ TEST_F(ConsoleLoggerTest, LowercaseTagDoesNotFormat) {
 // Border behavior
 // -----------------------------------------------------------------------------
 TEST_F(ConsoleLoggerTest, BorderIsPrintedAroundMessage) {
-    Logger border_logger(buffer, "====", Color::DEFAULT);
+    Logger border_logger(buffer, "====", Logger::Color::DEFAULT);
     border_logger.log("border test", "INFO");
     std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("===="));
@@ -180,12 +180,12 @@ TEST(ConsoleLoggerIsolationTest, InstancesKeepIndependentState) {
 // Color utility
 // -----------------------------------------------------------------------------
 TEST(ConsoleLoggerColorTest, ColorToCodeReturnsCorrectEscapeCodes) {
-    EXPECT_EQ(Logger::color_to_code(Color::RED),     "\033[31m");
-    EXPECT_EQ(Logger::color_to_code(Color::GREEN),   "\033[32m");
-    EXPECT_EQ(Logger::color_to_code(Color::YELLOW),  "\033[33m");
-    EXPECT_EQ(Logger::color_to_code(Color::BLUE),    "\033[34m");
-    EXPECT_EQ(Logger::color_to_code(Color::MAGENTA), "\033[35m");
-    EXPECT_EQ(Logger::color_to_code(Color::CYAN),    "\033[36m");
-    EXPECT_EQ(Logger::color_to_code(Color::WHITE),   "\033[37m");
-    EXPECT_EQ(Logger::color_to_code(Color::DEFAULT), "\033[0m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::RED),     "\033[31m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::GREEN),   "\033[32m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::YELLOW),  "\033[33m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::BLUE),    "\033[34m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::MAGENTA), "\033[35m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::CYAN),    "\033[36m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::WHITE),   "\033[37m");
+    EXPECT_EQ(Logger::color_to_code(Logger::Color::DEFAULT), "\033[0m");
 }

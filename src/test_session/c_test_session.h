@@ -1,5 +1,5 @@
-#ifndef C_TEST_SUITE_H
-#define C_TEST_SUITE_H
+#ifndef FORTEST_C_TEST_SESSION_H
+#define FORTEST_C_TEST_SESSION_H
 
 #include <string>
 
@@ -15,13 +15,13 @@ void c_register_test_suite(
 }
 
 void c_register_fixture(
-    const char *suite_name, const char *fixture_name, void *setup_ptr, void *teardown_ptr,
+    const char *suite_name, void *setup_ptr, void *teardown_ptr,
     void *args_ptr, const char *scope
 ) {
     auto setup = reinterpret_cast<void(*)(void *)>(setup_ptr);
     auto teardown = reinterpret_cast<void(*)(void *)>(teardown_ptr);
     try {
-        GlobalTestSession::instance().add_fixture(Fixture(setup, teardown, args_ptr, scope));
+        GlobalTestSession::instance().add_fixture(suite_name, Fixture(setup, teardown, args_ptr, scope));
     } catch (const std::out_of_range &) {
         GlobalLogger::instance()->log(
             "Test suite not found: " + std::string(suite_name), "ERROR"
@@ -42,18 +42,9 @@ void c_register_test(
     }
 }
 
-void c_run_test_suite(const char *name) {
-    try {
-        GlobalLogger::instance()->log(
-            "Running test suite: " + std::string(name), "INFO"
-        );
+void c_run_test_session() {
         auto logger = GlobalLogger::instance();
         GlobalTestSession::instance().run(logger);
-    } catch (const std::out_of_range &) {
-        GlobalLogger::instance()->log(
-            "Test suite not found: " + std::string(name), "ERROR"
-        );
-    }
 }
 
 int c_get_test_suite_status(const char *name) {
@@ -77,4 +68,4 @@ int c_get_test_suite_status(const char *name) {
 }
 }
 
-#endif //C_TEST_SUITE_H
+#endif //FORTEST_C_TEST_SESSION_H
