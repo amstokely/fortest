@@ -1,4 +1,4 @@
-module test_suite_mod
+module fortest_test_suite
    use iso_c_binding
    use procedure_interfaces_mod, only: test_proc, fixture_proc
    implicit none
@@ -80,4 +80,4 @@ contains
       call exit(status)
    end subroutine finalize
 
-end module test_suite_mod
+end module fortest_test_suite

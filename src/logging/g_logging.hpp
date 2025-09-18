@@ -3,11 +3,13 @@
 #include "global_base.hpp"
 #include "logging.hpp"
 
-class GlobalLogger : public Logger, public SingletonBase<Logger> {
-private:
-    friend class SingletonBase<GlobalLogger>;
-    GlobalLogger() = default;
+namespace Fortest {
+    class GlobalLogger : public Logger, public SingletonBase<Logger> {
+    private:
+        friend class SingletonBase<GlobalLogger>;
 
-};
+        GlobalLogger() = default;
+    };
+}
 
 #endif //G_LOGGING_HPP

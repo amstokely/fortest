@@ -1,0 +1,203 @@
+module test_assert_test_fixture_mod
+   use iso_c_binding, only: c_ptr, c_f_pointer, c_loc
+   use fortest_assert, only: assert_equal, assert_not_equal, assert_true, assert_false
+   implicit none
+
+   !> Fixture holding integer, real, double, and character test values.
+   type :: assert_fixture_t
+      integer :: int_a, int_b, int_c
+      real :: real_a, real_b, real_c
+      double precision :: double_a, double_b, double_c
+      character(len = 20) :: str_a, str_b, str_c
+   end type assert_fixture_t
+
+contains
+
+   !> Initialize fixture values.
+   subroutine setup_assert_fixture(args)
+      type(c_ptr), value :: args
+      type(assert_fixture_t), pointer :: fixture
+
+      call c_f_pointer(args, fixture)
+
+      fixture%int_a = 2
+      fixture%int_b = 3
+      fixture%int_c = 5
+
+      fixture%real_a = 1.5
+      fixture%real_b = 2.5
+      fixture%real_c = 3.75
+
+      fixture%double_a = 1.5d0
+      fixture%double_b = 2.5d0
+      fixture%double_c = 3.75d0
+
+      fixture%str_a = "Hello,"
+      fixture%str_b = "World!"
+      fixture%str_c = "Hello, World!"
+   end subroutine setup_assert_fixture
+
+   !> Teardown fixture (no-op).
+   subroutine teardown_assert_fixture(args)
+      type(c_ptr), value :: args
+   end subroutine teardown_assert_fixture
+
+   !> Integer equality test.
+   subroutine test_assert_equal_int(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_equal(t%int_a + t%int_b, t%int_c)
+      t%int_a = 100
+      t%int_b = 100
+      t%int_c = 100
+   end subroutine test_assert_equal_int
+
+   !> Real equality test.
+   subroutine test_assert_equal_float(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_equal(t%real_a * t%real_b, t%real_c)
+      t%real_a = 100.0
+      t%real_b = 100.0
+      t%real_c = 100.0
+   end subroutine test_assert_equal_float
+
+   !> Double equality test.
+   subroutine test_assert_equal_double(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_equal(t%double_a * t%double_b, t%double_c)
+      t%double_a = 100.0d0
+      t%double_b = 100.0d0
+      t%double_c = 100.0d0
+   end subroutine test_assert_equal_double
+
+   !> String equality test.
+   subroutine test_assert_equal_string(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_equal(trim(t%str_a) // " " // trim(t%str_b), trim(t%str_c))
+      t%str_a = "a"
+      t%str_b = "a"
+      t%str_c = "a"
+   end subroutine test_assert_equal_string
+
+   !> Integer inequality test.
+   subroutine test_assert_not_equal_int(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_not_equal(t%int_a, t%int_c)
+      t%int_a = 100
+      t%int_b = 100
+      t%int_c = 100
+   end subroutine test_assert_not_equal_int
+
+   !> Real inequality test.
+   subroutine test_assert_not_equal_float(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_not_equal(t%real_a, t%real_c)
+      t%real_a = 100.0
+      t%real_b = 100.0
+      t%real_c = 100.0
+   end subroutine test_assert_not_equal_float
+
+   !> Double inequality test.
+   subroutine test_assert_not_equal_double(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_not_equal(t%double_b, t%double_c)
+      t%double_a = 100.0d0
+      t%double_b = 100.0d0
+      t%double_c = 100.0d0
+   end subroutine test_assert_not_equal_double
+
+   !> String inequality test.
+   subroutine test_assert_not_equal_string(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_not_equal(trim(t%str_a), trim(t%str_c))
+      t%str_a = "a"
+      t%str_b = "a"
+      t%str_c = "a"
+   end subroutine test_assert_not_equal_string
+
+   !> True condition test.
+   subroutine test_assert_true(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_true(t%int_a < t%int_c)
+   end subroutine test_assert_true
+
+   !> False condition test.
+   subroutine test_assert_false(t_ptr, ts_ptr, s_ptr)
+      use iso_c_binding, only: c_ptr, c_f_pointer
+      type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
+      type(assert_fixture_t), pointer :: t
+      call c_f_pointer(t_ptr, t)
+      call assert_false(t%int_a > t%int_c)
+   end subroutine test_assert_false
+
+end module test_assert_test_fixture_mod
+
+
+!> Main program to run all assert tests.
+program test_assert_test_fixture
+   use iso_c_binding, only: c_ptr, c_loc
+   use fortest_test_session, only: test_session_t, test_suite_t
+   use test_assert_test_fixture_mod, only: assert_fixture_t, &
+         setup_assert_fixture, teardown_assert_fixture, &
+         test_assert_equal_int, test_assert_equal_float, &
+         test_assert_equal_double, test_assert_equal_string, &
+         test_assert_not_equal_int, test_assert_not_equal_float, &
+         test_assert_not_equal_double, test_assert_not_equal_string, &
+         test_assert_true, test_assert_false
+   implicit none
+
+   type(test_session_t) :: test_session
+   type(assert_fixture_t), target :: assert_fixture
+   type(c_ptr) :: assert_fixture_ptr
+
+   assert_fixture_ptr = c_loc(assert_fixture)
+
+   call test_session%register_test_suite("test_suite")
+   call test_session%register_fixture(&
+         setup = setup_assert_fixture, &
+         teardown = teardown_assert_fixture, &
+         args = assert_fixture_ptr, &
+         scope = "test", &
+         test_suite_name = "test_suite" &
+         )
+
+   call test_session%register_test("test_suite", "test_assert_equal_int", test_assert_equal_int)
+   call test_session%register_test("test_suite", "test_assert_equal_float", test_assert_equal_float)
+   call test_session%register_test("test_suite", "test_assert_equal_double", test_assert_equal_double)
+   call test_session%register_test("test_suite", "test_assert_equal_string", test_assert_equal_string)
+   call test_session%register_test("test_suite", "test_assert_not_equal_int", test_assert_not_equal_int)
+   call test_session%register_test("test_suite", "test_assert_not_equal_float", test_assert_not_equal_float)
+   call test_session%register_test("test_suite", "test_assert_not_equal_double", test_assert_not_equal_double)
+   call test_session%register_test("test_suite", "test_assert_not_equal_string", test_assert_not_equal_string)
+   call test_session%register_test("test_suite", "test_assert_true", test_assert_true)
+   call test_session%register_test("test_suite", "test_assert_false", test_assert_false)
+
+   call test_session%run()
+   call test_session%finalize()
+end program test_assert_test_fixture

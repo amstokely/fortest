@@ -1,4 +1,4 @@
-module assert_mod
+module fortest_assert
    use iso_c_binding, only: c_int, c_float, c_double, c_ptr
    use f_c_string_t_mod, only: f_c_string_t
 
@@ -168,4 +168,4 @@ contains
       call c_assert_false(i_condition)
    end subroutine assert_false
 
-end module assert_mod
+end module fortest_assert

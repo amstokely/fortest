@@ -3,8 +3,9 @@
 #include <memory>
 #include <string>
 
+
 /**
- * @brief Test fixture class for Fixture tests.
+ * @brief Test fixture class for Fortest::Fixture tests.
  * Provides shared state across individual test cases.
  */
 class FixtureTest : public ::testing::Test {
@@ -23,7 +24,7 @@ protected:
  * @test Verify that setup() invokes the setup function.
  */
 TEST_F(FixtureTest, setup_invokes_function) {
-    Fixture f(
+    Fortest::Fixture f(
         [&](void*) { setup_called = true; },
         nullptr,
         nullptr,
@@ -38,7 +39,7 @@ TEST_F(FixtureTest, setup_invokes_function) {
  * @test Verify that teardown() invokes the teardown function.
  */
 TEST_F(FixtureTest, teardown_invokes_function) {
-    Fixture f(
+    Fortest::Fixture f(
         nullptr,
         [&](void*) { teardown_called = true; },
         nullptr,
@@ -53,7 +54,7 @@ TEST_F(FixtureTest, teardown_invokes_function) {
  * @test Verify that both setup() and teardown() are called.
  */
 TEST_F(FixtureTest, setup_and_teardown_both_invoked) {
-    Fixture f(
+    Fortest::Fixture f(
         [&](void*) { setup_called = true; },
         [&](void*) { teardown_called = true; },
         nullptr,
@@ -75,7 +76,7 @@ TEST_F(FixtureTest, passes_arguments_to_functions) {
     auto setup = [&](void* a) { *static_cast<int*>(a) = 10; };
     auto teardown = [&](void* a) { *static_cast<int*>(a) = 20; };
 
-    Fixture f(setup, teardown, &arg_value, scope);
+    Fortest::Fixture f(setup, teardown, &arg_value, scope);
 
     f.setup();
     EXPECT_EQ(arg_value, 10);
@@ -88,7 +89,7 @@ TEST_F(FixtureTest, passes_arguments_to_functions) {
  * @test Verify that scope string is stored and retrievable.
  */
 TEST_F(FixtureTest, stores_and_returns_scope) {
-    Fixture f(nullptr, nullptr, nullptr, "custom_scope");
+    Fortest::Fixture f(nullptr, nullptr, nullptr, "custom_scope");
     EXPECT_EQ(f.get_scope(), "custom_scope");
 }
 
@@ -97,7 +98,7 @@ TEST_F(FixtureTest, stores_and_returns_scope) {
  */
 TEST_F(FixtureTest, stores_and_returns_args) {
     int arg = 42;
-    Fixture f(nullptr, nullptr, &arg, scope);
+    Fortest::Fixture f(nullptr, nullptr, &arg, scope);
 
     EXPECT_EQ(f.get_args(), &arg);
 }
@@ -106,7 +107,7 @@ TEST_F(FixtureTest, stores_and_returns_args) {
  * @test Verify that setup and teardown can be null without crashing.
  */
 TEST_F(FixtureTest, null_setup_and_teardown_do_nothing) {
-    Fixture f(nullptr, nullptr, nullptr, scope);
+    Fortest::Fixture f(nullptr, nullptr, nullptr, scope);
 
     EXPECT_NO_THROW({
         f.setup();

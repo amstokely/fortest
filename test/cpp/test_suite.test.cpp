@@ -4,10 +4,9 @@
 #include <sstream>
 
 using ::testing::HasSubstr;
-using Fortest = Test;
 
 // A simple logger for testing that writes into an ostringstream
-class OStreamLogger : public Logger {
+class OStreamLogger : public Fortest::Logger {
 public:
     explicit OStreamLogger(std::ostream &out) : Logger(out) {
     }
@@ -17,14 +16,14 @@ class TestSessionFixture : public ::testing::Test {
 protected:
     std::ostringstream buffer;
     std::shared_ptr<OStreamLogger> logger;
-    Assert<OStreamLogger> assert_obj; // for TestSuite
+    Fortest::Assert<OStreamLogger> assert_obj; // for TestSuite
 
     void SetUp() override {
         logger = std::make_shared<OStreamLogger>(buffer);
         assert_obj.reset();
     }
 
-    std::string get_output() {
+    std::string get_output() const {
         return buffer.str();
     }
 
@@ -40,7 +39,7 @@ TEST_F(TestSessionFixture, FixtureSetupAndTeardownAreCalled) {
     auto setup = [&](void *) { setup_called = true; };
     auto teardown = [&](void *) { teardown_called = true; };
 
-    Fixture f(setup, teardown, nullptr, "test");
+    Fortest::Fixture f(setup, teardown, nullptr, "test");
     f.setup();
     f.teardown();
 
@@ -50,12 +49,12 @@ TEST_F(TestSessionFixture, FixtureSetupAndTeardownAreCalled) {
 }
 
 TEST_F(TestSessionFixture, AddAndGetName) {
-    TestSuite ts("MySuite", assert_obj);
+    Fortest::TestSuite ts("MySuite", assert_obj);
     EXPECT_EQ(ts.get_name(), "MySuite");
 }
 
 TEST_F(TestSessionFixture, AddAndRunSingleTestPasses) {
-    TestSuite ts("SimpleSuite", assert_obj);
+    Fortest::TestSuite ts("SimpleSuite", assert_obj);
 
     // Add a test that does nothing (no failures)
     ts.add_test(
@@ -72,7 +71,7 @@ TEST_F(TestSessionFixture, AddAndRunSingleTestPasses) {
 }
 
 TEST_F(TestSessionFixture, GetStatuses) {
-    TestSuite ts("SimpleSuite", assert_obj);
+    Fortest::TestSuite ts("SimpleSuite", assert_obj);
 
     // Add a test that does nothing (no failures)
     ts.add_test(
@@ -88,13 +87,12 @@ TEST_F(TestSessionFixture, GetStatuses) {
     ts.run(logger);
     auto statuses = ts.get_statuses();
     EXPECT_EQ(statuses.size(), 2);
-    EXPECT_EQ(statuses["passing_test"], Fortest::Status::PASS);
-    EXPECT_EQ(statuses["failing_test"], Fortest::Status::FAIL);
-
+    EXPECT_EQ(statuses["passing_test"], Fortest::Test::Status::PASS);
+    EXPECT_EQ(statuses["failing_test"], Fortest::Test::Status::FAIL);
 }
 
 TEST_F(TestSessionFixture, AddAndRunTestFailsWhenAssertFails) {
-    TestSuite ts("FailSuite", assert_obj);
+    Fortest::TestSuite ts("FailSuite", assert_obj);
 
     ts.add_test(
         "failing_test", [&](void *, void *, void *) {
@@ -104,7 +102,7 @@ TEST_F(TestSessionFixture, AddAndRunTestFailsWhenAssertFails) {
 
     ts.run(logger);
 
-    std::string out = get_output();
+    const std::string out = get_output();
     EXPECT_THAT(out, HasSubstr("Running test: failing_test"));
     EXPECT_THAT(out, HasSubstr("[FAIL] Test failed: failing_test"));
     EXPECT_EQ(assert_obj.get_num_failed(), 1);
@@ -114,12 +112,12 @@ TEST_F(TestSessionFixture, SuiteFixtureSetupAndTeardownAreCalled) {
     bool setup_called = false;
     bool teardown_called = false;
 
-    Fixture suite_fixture(
+    Fortest::Fixture suite_fixture(
         [&](void *) { setup_called = true; },
         [&](void *) { teardown_called = true; }, nullptr, "suite"
     );
 
-    TestSuite ts("WithSuiteFixture", assert_obj);
+    Fortest::TestSuite ts("WithSuiteFixture", assert_obj);
     ts.add_fixture(suite_fixture);
 
     ts.add_test(

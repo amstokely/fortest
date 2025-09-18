@@ -1,6 +1,6 @@
 module test_assert_no_fixture_mod
     use iso_c_binding, only : c_ptr
-    use assert_mod
+    use fortest_assert, only : assert_equal, assert_not_equal, assert_true, assert_false
     implicit none
 contains
     !***********************************************************************
@@ -174,7 +174,7 @@ end module test_assert_no_fixture_mod
 
 program test_assert_no_fixture
     use test_assert_no_fixture_mod
-    use test_session_mod
+    use fortest_test_session
     implicit none
     type(test_suite_t) :: test_suite
     type (test_session_t) :: test_session

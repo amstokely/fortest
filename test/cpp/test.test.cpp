@@ -4,10 +4,9 @@
 #include <sstream>
 
 using ::testing::HasSubstr;
-using FortestTest = Test;
 
 // A simple logger for testing that writes into an ostringstream
-class OStreamLogger : public Logger {
+class OStreamLogger : public Fortest::Logger {
 public:
     explicit OStreamLogger(std::ostream &out) : Logger(out) {
     }
@@ -17,7 +16,7 @@ class TestFixture : public ::testing::Test {
 protected:
     std::ostringstream buffer;
     std::shared_ptr<OStreamLogger> logger;
-    Assert<OStreamLogger> assert_obj; // for TestSuite
+    Fortest::Assert<OStreamLogger> assert_obj; // for TestSuite
 
     void SetUp() override {
         logger = std::make_shared<OStreamLogger>(buffer);
@@ -37,7 +36,7 @@ protected:
 TEST_F(TestFixture, ConstructorSetsName) {
     const std::string test_name = "test";
     int a{}, b{}, c{};
-    const FortestTest test(test_name, TestFunction());
+    const Fortest::Test test(test_name, TestFunction());
     EXPECT_EQ(test_name, test.get_name());
 }
 
@@ -50,18 +49,20 @@ TEST_F(TestFixture, RunTestFunction) {
     auto teardown = [](void *a) {
     };
     const auto test_args = new int(1);
-    const auto test_fixture = std::make_shared<Fixture>(
-        Fixture(setup, teardown, (void *) test_args, "test")
+    const auto test_fixture = std::make_shared<Fortest::Fixture>(
+        Fortest::Fixture(setup, teardown, (void *) test_args, "test")
     );
     const auto suite_args = new int(1);
     suite_args[0] = 1;
-    const auto suite_fixture = std::make_shared<Fixture>(
-        Fixture(setup, teardown, (void *) suite_args, "suite")
+    const auto suite_fixture = std::make_shared<Fortest::Fixture>(
+        Fortest::Fixture(setup, teardown, (void *) suite_args, "suite")
     );
     const auto session_args = new int(1);
     session_args[0] = 1;
-    const auto session_fixture = std::make_shared<Fixture>(
-        Fixture(setup, teardown, (void *) session_args, "session")
+    const auto session_fixture = std::make_shared<Fortest::Fixture>(
+        Fortest::Fixture(
+            setup, teardown, (void *) session_args, "session"
+        )
     );
     auto fn = [](void *a, void *b, void *c) {
         const auto int_a = static_cast<int *>(a);
@@ -69,7 +70,7 @@ TEST_F(TestFixture, RunTestFunction) {
         const auto int_c = static_cast<int *>(c);
         *int_a = *int_b + *int_c;
     };
-    FortestTest test(test_name, fn);
+    Fortest::Test test(test_name, fn);
     test.add_fixture(test_fixture);
     test.add_fixture(suite_fixture);
     test.add_fixture(session_fixture);
@@ -78,22 +79,22 @@ TEST_F(TestFixture, RunTestFunction) {
 };
 
 TEST_F(TestFixture, ConstructorWithEmptyName) {
-    FortestTest test("", TestFunction());
+    Fortest::Test test("", TestFunction());
     EXPECT_TRUE(test.get_name().empty());
 }
 
 TEST_F(TestFixture, AddFixtureStoresCorrectScope) {
-    auto f_test = std::make_shared<Fixture>(
+    auto f_test = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, nullptr, "test"
     );
-    auto f_suite = std::make_shared<Fixture>(
+    auto f_suite = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, nullptr, "suite"
     );
-    auto f_session = std::make_shared<Fixture>(
+    auto f_session = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, nullptr, "session"
     );
 
-    FortestTest test("name", TestFunction());
+    Fortest::Test test("name", TestFunction());
     test.add_fixture(f_test);
     test.add_fixture(f_suite);
     test.add_fixture(f_session);
@@ -104,7 +105,7 @@ TEST_F(TestFixture, AddFixtureStoresCorrectScope) {
         EXPECT_EQ(b, nullptr);
         EXPECT_EQ(c, nullptr);
     };
-    FortestTest t2("with fixtures", fn);
+    Fortest::Test t2("with fixtures", fn);
     t2.add_fixture(f_test);
     t2.add_fixture(f_suite);
     t2.add_fixture(f_session);
@@ -112,10 +113,10 @@ TEST_F(TestFixture, AddFixtureStoresCorrectScope) {
 }
 
 TEST_F(TestFixture, AddFixtureWithUnknownScopeDoesNothing) {
-    auto f_unknown = std::make_shared<Fixture>(
+    auto f_unknown = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, nullptr, "unknown"
     );
-    FortestTest test(
+    Fortest::Test test(
         "name", [](void *, void *, void *) {
         }
     );
@@ -127,7 +128,7 @@ TEST_F(TestFixture, AddFixtureWithUnknownScopeDoesNothing) {
 
 TEST_F(TestFixture, RunWithoutFixtures) {
     bool called = false;
-    FortestTest test(
+    Fortest::Test test(
         "simple", [&](void *, void *, void *) { called = true; }
     );
     test.run(logger, assert_obj);
@@ -135,21 +136,20 @@ TEST_F(TestFixture, RunWithoutFixtures) {
 }
 
 TEST_F(TestFixture, GetTestStatusPassed) {
-    FortestTest passing_test(
+    Fortest::Test passing_test(
         "simple", [&](void *, void *, void *) {
             assert_obj.assert_true(true, logger);
         }
     );
-    FortestTest failing_test(
+    Fortest::Test failing_test(
         "simple", [&](void *, void *, void *) {
             assert_obj.assert_true(false, logger);
         }
     );
     passing_test.run(logger, assert_obj);
     failing_test.run(logger, assert_obj);
-    EXPECT_EQ(passing_test.get_status(), FortestTest::Status::PASS);
-    EXPECT_EQ(failing_test.get_status(), FortestTest::Status::FAIL);
-
+    EXPECT_EQ(passing_test.get_status(), Fortest::Test::Status::PASS);
+    EXPECT_EQ(failing_test.get_status(), Fortest::Test::Status::FAIL);
 }
 
 TEST_F(TestFixture, RunCallsSetupAndTeardown) {
@@ -157,12 +157,12 @@ TEST_F(TestFixture, RunCallsSetupAndTeardown) {
     bool teardown_called = false;
     int *arg = new int(5);
 
-    auto fixture = std::make_shared<Fixture>(
+    auto fixture = std::make_shared<Fortest::Fixture>(
         [&](void *a) { setup_called = true; },
         [&](void *a) { teardown_called = true; }, (void *) arg, "test"
     );
 
-    FortestTest test(
+    Fortest::Test test(
         "with fixture", [&](void *a, void *, void *) {
             EXPECT_EQ(a, arg);
         }
@@ -178,12 +178,12 @@ TEST_F(TestFixture, RunCallsSetupAndTeardown) {
 TEST_F(TestFixture, RunTestFunctionThrowsStillCallsTeardown) {
     bool teardown_called = false;
     int *arg = new int(42);
-    auto fixture = std::make_shared<Fixture>(
+    auto fixture = std::make_shared<Fortest::Fixture>(
         nullptr, [&](void *a) { teardown_called = true; }, (void *) arg,
         "test"
     );
 
-    FortestTest test(
+    Fortest::Test test(
         "throws", [&](void *, void *, void *) {
             throw std::runtime_error("boom");
         }
@@ -201,12 +201,12 @@ TEST_F(TestFixture, RunWithOnlyTestFixture) {
     bool setup_called = false;
     bool teardown_called = false;
 
-    auto fixture = std::make_shared<Fixture>(
+    auto fixture = std::make_shared<Fortest::Fixture>(
         [&](void *a) { setup_called = true; },
         [&](void *a) { teardown_called = true; }, (void *) arg, "test"
     );
 
-    FortestTest test(
+    Fortest::Test test(
         "only-test", [&](void *a, void *, void *) {
             EXPECT_EQ(a, arg);
         }
@@ -221,13 +221,13 @@ TEST_F(TestFixture, RunWithOnlyTestFixture) {
 
 TEST_F(TestFixture, RunWithOnlySuiteFixture) {
     int *arg = new int(7);
-    FortestTest test(
+    Fortest::Test test(
         "only-suite", [&](void *, void *b, void *) {
             EXPECT_EQ(b, arg);
         }
     );
 
-    auto f_suite = std::make_shared<Fixture>(
+    auto f_suite = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, (void *) arg, "suite"
     );
     test.add_fixture(f_suite);
@@ -239,13 +239,13 @@ TEST_F(TestFixture, SetupRunsBeforeTestAndTeardownAfter) {
     bool order_ok = false;
     int *arg = new int(1);
 
-    auto fixture = std::make_shared<Fixture>(
+    auto fixture = std::make_shared<Fortest::Fixture>(
         [&](void *a) { *static_cast<int *>(a) = 2; }, [&](void *a) {
             if (*static_cast<int *>(a) == 3) order_ok = true;
         }, (void *) arg, "test"
     );
 
-    FortestTest test(
+    Fortest::Test test(
         "order", [&](void *a, void *, void *) {
             EXPECT_EQ(*static_cast<int*>(a), 2); // setup ran
             *static_cast<int *>(a) = 3;
@@ -262,14 +262,14 @@ TEST_F(TestFixture, MultipleAddFixtureOverridesPrevious) {
     int *arg1 = new int(5);
     int *arg2 = new int(10);
 
-    auto f1 = std::make_shared<Fixture>(
+    auto f1 = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, (void *) arg1, "suite"
     );
-    auto f2 = std::make_shared<Fixture>(
+    auto f2 = std::make_shared<Fortest::Fixture>(
         nullptr, nullptr, (void *) arg2, "suite"
     );
 
-    FortestTest test(
+    Fortest::Test test(
         "override", [&](void *, void *b, void *) {
             EXPECT_EQ(b, arg2); // last one should win
         }

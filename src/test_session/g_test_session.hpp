@@ -7,19 +7,24 @@
 #include "assert.hpp"
 #include "g_assert.hpp"
 
-class GlobalTestSession {
-public:
-    static TestSession<Logger>& instance() {
-        static TestSession session(*GlobalAssert::instance());
-        return session;
-    }
+namespace Fortest {
+    class GlobalTestSession {
+    public:
+        static TestSession<Logger> &instance() {
+            static TestSession session(*GlobalAssert::instance());
+            return session;
+        }
 
-private:
-    GlobalTestSession() = default;
-    ~GlobalTestSession() = default;
+    private:
+        GlobalTestSession() = default;
 
-    GlobalTestSession(const GlobalTestSession&) = delete;
-    GlobalTestSession& operator=(const GlobalTestSession&) = delete;
-};
+        ~GlobalTestSession() = default;
+
+        GlobalTestSession(const GlobalTestSession &) = delete;
+
+        GlobalTestSession &operator=(const GlobalTestSession &) = delete
+        ;
+    };
+}
 
 #endif // FORTEST_GLOBAL_TEST_SESSION_HPP

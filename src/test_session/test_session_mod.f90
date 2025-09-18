@@ -1,5 +1,5 @@
-module test_session_mod
-    use test_suite_mod, only : test_suite_t
+module fortest_test_session
+    use fortest_test_suite, only : test_suite_t
     use procedure_interfaces_mod, only : test_proc, fixture_proc
     use iso_c_binding
     implicit none
@@ -23,13 +23,14 @@ module test_session_mod
         procedure :: register_test
         procedure :: run
         procedure, public :: finalize
+        procedure, public :: get_status
     end type test_session_t
 
 contains
 
     !> Register a new test suite and add it to the linked list
     subroutine register_test_suite(this, name)
-        use test_suite_mod, only : test_suite_t
+        use fortest_test_suite, only : test_suite_t
         use f_c_string_t_mod, only : f_c_string_t
 
         class(test_session_t), intent(inout) :: this
@@ -96,14 +97,13 @@ contains
                 c_funloc(test))
     end subroutine register_test
 
-    subroutine register_fixture(this, test_suite_name, fixture_name, setup, teardown, args, scope)
+    subroutine register_fixture(this, setup, teardown, args, scope, test_suite_name)
         class(test_session_t), intent(in) :: this
-        character(len = *), intent(in) :: test_suite_name
-        character(len = *), intent(in) :: fixture_name
         procedure(fixture_proc) :: setup
         procedure(fixture_proc) :: teardown
         type(c_ptr), value :: args
         character(len = *), intent(in) :: scope
+        character(len = *), intent(in) :: test_suite_name
         type(test_suite_t), pointer :: test_suite_ptr
 
         test_suite_ptr => this%get_test_suite(test_suite_name)
@@ -122,10 +122,25 @@ contains
         call c_run_test_session()
     end subroutine run
 
+    function get_status(this) result(status)
+        class(test_session_t), intent(inout) :: this
+        type(test_suite_node_t), pointer :: node
+        integer :: status
+
+        status = 0
+        node => this%head
+        do while (associated(node))
+            status = status + node%suite%get_status()
+            node => node%next
+        end do
+    end function get_status
+
     subroutine finalize(this)
         class(test_session_t), intent(inout) :: this
         type(test_suite_node_t), pointer :: node, temp
+        integer :: status
 
+        status = this%get_status()
         node => this%head
         do while (associated(node))
             temp => node%next
@@ -134,6 +149,7 @@ contains
         end do
         this%head => null()
         this%tail => null()
+        call exit(status)
     end subroutine finalize
 
 
@@ -156,4 +172,4 @@ contains
         end do
     end function get_test_suite
 
-end module test_session_mod
+end module fortest_test_session

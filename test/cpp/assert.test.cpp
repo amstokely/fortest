@@ -4,13 +4,14 @@
 #include <memory>
 #include <string>
 
+
 // Null logger that satisfies LoggerLike but discards output
 class NullLogger {
 public:
     static void log(const std::string &, const std::string &) {}
 };
 
-using TestAssert = Assert<NullLogger>;
+using TestAssert = Fortest::Assert<NullLogger>;
 
 // Base fixture
 class AssertTest : public ::testing::Test {

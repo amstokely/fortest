@@ -5,6 +5,8 @@
 
 using ::testing::HasSubstr;
 
+using namespace Fortest;
+
 // A simple logger for testing that writes into an ostringstream
 class OStreamLogger : public Logger {
 public:
