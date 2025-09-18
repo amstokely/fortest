@@ -1,16 +1,26 @@
 #ifndef G_ASSERT_HPP
 #define G_ASSERT_HPP
 
-#include <memory>
-#include "assert.hpp"      // your Assert class
-#include "global_base.hpp" // your SingletonBase class
+#include "assert.hpp"      // Assert class
+#include "global_base.hpp" // SingletonBase class
+
 namespace Fortest {
-    // GlobalAssert wraps Assert in a singleton
+
+    /// @brief Global singleton for assertions.
+    ///
+    /// Provides a single global instance of `Assert<Logger>`.
+    /// This ensures all tests use the same assertion manager
+    /// without needing to pass it explicitly. Inherits from
+    /// both `Assert<Logger>` for assertion functionality and
+    /// `SingletonBase` to enforce a single global instance.
     class GlobalAssert : public Assert<Logger>,
                          public SingletonBase<Assert<Logger>> {
     private:
+        /// @brief Allow SingletonBase to construct the instance.
         friend class SingletonBase<Assert<Logger>>;
-        GlobalAssert() = default; // only SingletonBase can construct it
+
+        /// @brief Hidden constructor for singleton use only.
+        GlobalAssert() = default;
     };
 }
 

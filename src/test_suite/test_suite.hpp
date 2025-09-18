@@ -15,7 +15,7 @@ namespace Fortest {
      *
      * @tparam Logger A logger type satisfying LoggerLike.
      */
-    template <typename Logger>
+    template <LoggerLike Logger>
     class TestSuite {
         std::string m_name;  //!< Name of the test suite
         std::map<std::string, Test> m_tests; //!< Map of test names to test objects

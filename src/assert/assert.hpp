@@ -90,7 +90,7 @@ namespace Fortest {
          * @tparam T Type of the values (must be equality-comparable).
          * @param expected The expected value.
          * @param actual   The actual value.
-         * @param logger   A logger instance (optional).
+         * @param logger   A logger instance.
          */
         template<typename T> void assert_equal(
             const T &expected, const T &actual,
