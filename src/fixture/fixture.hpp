@@ -7,43 +7,39 @@ namespace Fortest {
     using FixtureFunction = std::function<void(void *)>;
     using Args = void *;
 
+    enum class Scope { Test, Suite, Session };
+
+    template <typename T = void>
     class Fixture {
+        using FixtureFunction = std::function<void(T*)>;
+
         FixtureFunction m_setup{};
         FixtureFunction m_teardown{};
-        Args m_args{};
-        std::string m_scope{};
+        T* m_args{};
+        Scope m_scope{};
 
     public:
-        Fixture(
-            FixtureFunction setup, FixtureFunction teardown, Args args,
-            std::string scope
-        ) : m_setup(std::move(setup)), m_teardown(std::move(teardown)),
-            m_args(args), m_scope(std::move(scope)) {
-        }
+        Fixture(FixtureFunction setup,
+                FixtureFunction teardown,
+                T* args,
+                Scope scope)
+            : m_setup(std::move(setup)),
+              m_teardown(std::move(teardown)),
+              m_args(args),
+              m_scope(scope) {}
 
-        void setup() const {
-            if (m_setup) {
-                m_setup(m_args);
-            }
-        }
+        void setup() const { if (m_setup) m_setup(m_args); }
+        void teardown() const { if (m_teardown) m_teardown(m_args); }
 
-        void teardown() const {
-            if (m_teardown) {
-                m_teardown(m_args);
-            }
-        }
+        Fixture(const Fixture&) = default;
+        Fixture(Fixture&&) noexcept = default;
+        Fixture& operator=(const Fixture&) = default;
+        Fixture& operator=(Fixture&&) noexcept = default;
 
-        // Defaulted copy semantics
-        Fixture(const Fixture &) = default;
-
-        Fixture &operator=(const Fixture &) = default;
-
-        [[nodiscard]] const std::string &get_scope() const {
-            return m_scope;
-        }
-
-        [[nodiscard]] Args get_args() const { return m_args; }
+        [[nodiscard]] Scope get_scope() const noexcept { return m_scope; }
+        [[nodiscard]] T* get_args() const noexcept { return m_args; }
     };
+
 }
 
 

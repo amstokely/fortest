@@ -1,46 +1,63 @@
-#ifndef TEST_SUITE_HPP
-#define TEST_SUITE_HPP
+#ifndef FORTEST_TEST_SUITE_HPP
+#define FORTEST_TEST_SUITE_HPP
 
-#include "fixture.hpp"
-#include <functional>
-#include <map>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <utility>
-
-#include "assert.hpp"
-#include "logging.hpp"
 #include "test.hpp"
 
 namespace Fortest {
-    template<typename Logger> class TestSuite {
-        std::string m_name;
-        std::map<std::string, Test> m_tests;
-        std::shared_ptr<Fixture> m_test_fixture = std::make_shared<
-            Fixture>(nullptr, nullptr, nullptr, "test");
-        std::shared_ptr<Fixture> m_suite_fixture;
-        std::shared_ptr<Fixture> m_session_fixture;
-        Assert<Logger> &m_assert;
-        std::unordered_map<std::string, Test::Status> m_statuses;
+
+    /**
+     * @brief Represents a collection of tests within a suite.
+     *
+     * @details
+     * A TestSuite groups related tests, manages suite-level and
+     * test-level fixtures, and tracks test statuses. Fixtures can be
+     * attached at the test, suite, or session scope.
+     *
+     * @tparam Logger A logger type satisfying LoggerLike.
+     */
+    template <typename Logger>
+    class TestSuite {
+        std::string m_name;  //!< Name of the test suite
+        std::map<std::string, Test> m_tests; //!< Map of test names to test objects
+        std::shared_ptr<Fixture<void>> m_test_fixture;    //!< Test-level fixture
+        std::shared_ptr<Fixture<void>> m_suite_fixture;   //!< Suite-level fixture
+        std::shared_ptr<Fixture<void>> m_session_fixture; //!< Session-level fixture
+        Assert<Logger> &m_assert; //!< Assertion engine
+        std::unordered_map<std::string, Test::Status> m_statuses; //!< Status of each test
 
     public:
-        TestSuite(std::string name, Assert<Logger> &assert) : m_name(
-            std::move(name)
-        ), m_assert(assert) {
-        }
+        /**
+         * @brief Construct a TestSuite with a name and assertion engine.
+         * @param name   Suite name.
+         * @param assert Reference to the assertion manager.
+         */
+        TestSuite(std::string name, Assert<Logger> &assert)
+            : m_name(std::move(name)), m_assert(assert) {}
 
-        void add_fixture(const Fixture &fixture) {
-            const auto &scope = fixture.get_scope();
-            if (scope == "session") {
-                m_session_fixture = std::make_shared<Fixture>(fixture);
-            } else if (scope == "suite") {
-                m_suite_fixture = std::make_shared<Fixture>(fixture);
-            } else if (scope == "test") {
-                m_test_fixture = std::make_shared<Fixture>(fixture);
+        /**
+         * @brief Add a fixture to the suite.
+         * @param fixture Fixture with scope Test, Suite, or Session.
+         */
+        void add_fixture(const Fixture<void> &fixture) {
+            switch (fixture.get_scope()) {
+                case Scope::Session:
+                    m_session_fixture = std::make_shared<Fixture<void>>(fixture);
+                    break;
+                case Scope::Suite:
+                    m_suite_fixture = std::make_shared<Fixture<void>>(fixture);
+                    break;
+                case Scope::Test:
+                    m_test_fixture = std::make_shared<Fixture<void>>(fixture);
+                    break;
             }
         }
 
+        /**
+         * @brief Add a test to the suite.
+         *
+         * @param test_name Name of the test.
+         * @param func      Test function.
+         */
         void add_test(const std::string &test_name, TestFunction func) {
             Test test(test_name, std::move(func));
 
@@ -53,29 +70,35 @@ namespace Fortest {
             if (m_session_fixture) {
                 test.add_fixture(m_session_fixture);
             }
-            m_tests.emplace(test_name, std::move(test));
+
             m_statuses[test_name] = test.get_status();
+            m_tests.emplace(test_name, std::move(test));
         }
 
-        [[nodiscard]] const std::string &get_name() const {
-            return m_name;
-        }
+        /// @brief Get the name of this test suite.
+        [[nodiscard]] const std::string &get_name() const { return m_name; }
 
-        [[nodiscard]] const std::unordered_map<std::string,
-            Test::Status> &
+        /// @brief Get a map of test names to their statuses.
+        [[nodiscard]] const std::unordered_map<std::string, Test::Status> &
         get_statuses() const {
             return m_statuses;
         }
 
+        /**
+         * @brief Run all tests in the suite.
+         *
+         * @param logger Shared pointer to a logger.
+         */
         void run(const std::shared_ptr<Logger> &logger) {
             if (m_suite_fixture) {
                 m_suite_fixture->setup();
             }
 
-            for (auto &[test_name, test]: m_tests) {
+            for (auto &[test_name, test] : m_tests) {
                 logger->log("Running test: " + test_name, "INFO");
                 test.run(logger, m_assert);
                 m_statuses[test_name] = test.get_status();
+
                 if (test.get_status() == Test::Status::PASS) {
                     logger->log("Test passed: " + test_name, "PASS");
                 } else {
@@ -88,6 +111,7 @@ namespace Fortest {
             }
         }
     };
-}
 
-#endif // TEST_SUITE_HPP
+} // namespace Fortest
+
+#endif // FORTEST_TEST_SUITE_HPP

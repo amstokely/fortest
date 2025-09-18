@@ -3,16 +3,14 @@
 #include <memory>
 #include <string>
 
-
 /**
- * @brief Test fixture class for Fortest::Fixture tests.
+ * @brief Test fixture for Fortest::Fixture<void>.
  * Provides shared state across individual test cases.
  */
 class FixtureTest : public ::testing::Test {
 protected:
     bool setup_called{};
     bool teardown_called{};
-    std::string scope{"test"};
 
     void SetUp() override {
         setup_called = false;
@@ -21,14 +19,14 @@ protected:
 };
 
 /**
- * @test Verify that setup() invokes the setup function.
+ * @test Behavior: setup() invokes the setup function.
  */
-TEST_F(FixtureTest, setup_invokes_function) {
-    Fortest::Fixture f(
+TEST_F(FixtureTest, SetupInvokesFunction) {
+    Fortest::Fixture<void> f(
         [&](void*) { setup_called = true; },
         nullptr,
         nullptr,
-        scope
+        Fortest::Scope::Test
     );
 
     f.setup();
@@ -36,14 +34,14 @@ TEST_F(FixtureTest, setup_invokes_function) {
 }
 
 /**
- * @test Verify that teardown() invokes the teardown function.
+ * @test Behavior: teardown() invokes the teardown function.
  */
-TEST_F(FixtureTest, teardown_invokes_function) {
-    Fortest::Fixture f(
+TEST_F(FixtureTest, TeardownInvokesFunction) {
+    Fortest::Fixture<void> f(
         nullptr,
         [&](void*) { teardown_called = true; },
         nullptr,
-        scope
+        Fortest::Scope::Test
     );
 
     f.teardown();
@@ -51,32 +49,33 @@ TEST_F(FixtureTest, teardown_invokes_function) {
 }
 
 /**
- * @test Verify that both setup() and teardown() are called.
+ * @test Behavior: setup() and teardown() can both be invoked.
  */
-TEST_F(FixtureTest, setup_and_teardown_both_invoked) {
-    Fortest::Fixture f(
+TEST_F(FixtureTest, SetupAndTeardownBothInvoked) {
+    Fortest::Fixture<void> f(
         [&](void*) { setup_called = true; },
         [&](void*) { teardown_called = true; },
         nullptr,
-        scope
+        Fortest::Scope::Test
     );
 
     f.setup();
     f.teardown();
+
     EXPECT_TRUE(setup_called);
     EXPECT_TRUE(teardown_called);
 }
 
 /**
- * @test Verify that arguments are passed to setup and teardown.
+ * @test Behavior: Arguments are passed to setup() and teardown().
  */
-TEST_F(FixtureTest, passes_arguments_to_functions) {
+TEST_F(FixtureTest, PassesArgumentsToFunctions) {
     int arg_value = 0;
 
     auto setup = [&](void* a) { *static_cast<int*>(a) = 10; };
     auto teardown = [&](void* a) { *static_cast<int*>(a) = 20; };
 
-    Fortest::Fixture f(setup, teardown, &arg_value, scope);
+    Fortest::Fixture<void> f(setup, teardown, &arg_value, Fortest::Scope::Test);
 
     f.setup();
     EXPECT_EQ(arg_value, 10);
@@ -86,28 +85,20 @@ TEST_F(FixtureTest, passes_arguments_to_functions) {
 }
 
 /**
- * @test Verify that scope string is stored and retrievable.
+ * @test Behavior: The args pointer is stored and retrievable.
  */
-TEST_F(FixtureTest, stores_and_returns_scope) {
-    Fortest::Fixture f(nullptr, nullptr, nullptr, "custom_scope");
-    EXPECT_EQ(f.get_scope(), "custom_scope");
-}
-
-/**
- * @test Verify that args pointer is stored and retrievable.
- */
-TEST_F(FixtureTest, stores_and_returns_args) {
+TEST_F(FixtureTest, StoresAndReturnsArgs) {
     int arg = 42;
-    Fortest::Fixture f(nullptr, nullptr, &arg, scope);
+    Fortest::Fixture<void> f(nullptr, nullptr, &arg, Fortest::Scope::Test);
 
     EXPECT_EQ(f.get_args(), &arg);
 }
 
 /**
- * @test Verify that setup and teardown can be null without crashing.
+ * @test Behavior: setup() and teardown() may be null and do nothing.
  */
-TEST_F(FixtureTest, null_setup_and_teardown_do_nothing) {
-    Fortest::Fixture f(nullptr, nullptr, nullptr, scope);
+TEST_F(FixtureTest, NullSetupAndTeardownDoNothing) {
+    Fortest::Fixture<void> f(nullptr, nullptr, nullptr, Fortest::Scope::Test);
 
     EXPECT_NO_THROW({
         f.setup();

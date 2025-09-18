@@ -1,5 +1,16 @@
+!> @brief Assertion utilities for Fortran tests.
+!>
+!> @details
+!> This module provides typed assertion routines that wrap C
+!> implementations for consistency and integration with the Fortest
+!> framework. Supported assertions include:
+!> - Equality and inequality for integers, reals, doubles, and strings
+!> - Boolean checks (`assert_true`, `assert_false`)
+!>
+!> These routines are thin Fortran wrappers that forward arguments to
+!> corresponding C functions for logging and reporting.
 module fortest_assert
-   use iso_c_binding, only: c_int, c_float, c_double, c_ptr
+   use iso_c_binding,    only: c_int, c_float, c_double, c_ptr
    use f_c_string_t_mod, only: f_c_string_t
 
    implicit none
@@ -10,6 +21,7 @@ module fortest_assert
    public :: assert_true
    public :: assert_false
 
+   !> @brief Assert equality of two values.
    interface assert_equal
       module procedure assert_equal_int
       module procedure assert_equal_float
@@ -17,6 +29,7 @@ module fortest_assert
       module procedure assert_equal_string
    end interface assert_equal
 
+   !> @brief Assert inequality of two values.
    interface assert_not_equal
       module procedure assert_not_equal_int
       module procedure assert_not_equal_float
@@ -26,143 +39,161 @@ module fortest_assert
 
 contains
 
+   !> @brief Assert that two integers are equal.
+   !> @param expected Expected integer value.
+   !> @param actual   Actual integer value.
    subroutine assert_equal_int(expected, actual)
-      implicit none
-      integer(c_int) :: expected, actual
+      integer(c_int), intent(in) :: expected, actual
       interface
          subroutine c_assert_equal_int(expected, actual) bind(C)
             import :: c_int
             integer(c_int), value :: expected, actual
-         end subroutine
+         end subroutine c_assert_equal_int
       end interface
       call c_assert_equal_int(expected, actual)
    end subroutine assert_equal_int
 
+   !> @brief Assert that two real (single precision) values are equal.
+   !> @param expected Expected real value.
+   !> @param actual   Actual real value.
    subroutine assert_equal_float(expected, actual)
-      implicit none
-      real(c_float) :: expected, actual
+      real(c_float), intent(in) :: expected, actual
       interface
          subroutine c_assert_equal_float(expected, actual) bind(C)
             import :: c_float
             real(c_float), value :: expected, actual
-         end subroutine
+         end subroutine c_assert_equal_float
       end interface
       call c_assert_equal_float(expected, actual)
    end subroutine assert_equal_float
 
+   !> @brief Assert that two double precision values are equal.
+   !> @param expected Expected double precision value.
+   !> @param actual   Actual double precision value.
    subroutine assert_equal_double(expected, actual)
-      implicit none
-      real(c_double) :: expected, actual
+      real(c_double), intent(in) :: expected, actual
       interface
          subroutine c_assert_equal_double(expected, actual) bind(C)
             import :: c_double
             real(c_double), value :: expected, actual
-         end subroutine
+         end subroutine c_assert_equal_double
       end interface
       call c_assert_equal_double(expected, actual)
    end subroutine assert_equal_double
 
+   !> @brief Assert that two character strings are equal.
+   !> @param expected Expected string value.
+   !> @param actual   Actual string value.
    subroutine assert_equal_string(expected, actual)
-      implicit none
-      character(len = *) :: expected, actual
+      character(len=*), intent(in) :: expected, actual
       type(f_c_string_t) :: f_c_string_expected, f_c_string_actual
       integer :: status
       interface
          subroutine c_assert_equal_string(expected, actual) bind(C)
             import :: c_ptr
             type(c_ptr), value, intent(in) :: expected, actual
-         end subroutine
+         end subroutine c_assert_equal_string
       end interface
-      status = 0
+
       f_c_string_expected = f_c_string_t(expected)
-      f_c_string_actual = f_c_string_t(actual)
+      f_c_string_actual   = f_c_string_t(actual)
       status = f_c_string_expected%to_c()
       status = f_c_string_actual%to_c()
-      call c_assert_equal_string(&
+      call c_assert_equal_string( &
             f_c_string_expected%get_c_string(), &
             f_c_string_actual%get_c_string())
    end subroutine assert_equal_string
 
+   !> @brief Assert that two integers are not equal.
+   !> @param expected Integer value to compare.
+   !> @param actual   Integer value to compare.
    subroutine assert_not_equal_int(expected, actual)
-      implicit none
-      integer(c_int) :: expected, actual
+      integer(c_int), intent(in) :: expected, actual
       interface
          subroutine c_assert_not_equal_int(expected, actual) bind(C)
             import :: c_int
             integer(c_int), value :: expected, actual
-         end subroutine
+         end subroutine c_assert_not_equal_int
       end interface
       call c_assert_not_equal_int(expected, actual)
    end subroutine assert_not_equal_int
 
+   !> @brief Assert that two real (single precision) values are not equal.
+   !> @param expected Real value to compare.
+   !> @param actual   Real value to compare.
    subroutine assert_not_equal_float(expected, actual)
-      implicit none
-      real(c_float) :: expected, actual
+      real(c_float), intent(in) :: expected, actual
       interface
          subroutine c_assert_not_equal_float(expected, actual) bind(C)
             import :: c_float
             real(c_float), value :: expected, actual
-         end subroutine
+         end subroutine c_assert_not_equal_float
       end interface
       call c_assert_not_equal_float(expected, actual)
    end subroutine assert_not_equal_float
 
+   !> @brief Assert that two double precision values are not equal.
+   !> @param expected Double precision value to compare.
+   !> @param actual   Double precision value to compare.
    subroutine assert_not_equal_double(expected, actual)
-      implicit none
-      real(c_double) :: expected, actual
+      real(c_double), intent(in) :: expected, actual
       interface
          subroutine c_assert_not_equal_double(expected, actual) bind(C)
             import :: c_double
             real(c_double), value :: expected, actual
-         end subroutine
+         end subroutine c_assert_not_equal_double
       end interface
       call c_assert_not_equal_double(expected, actual)
    end subroutine assert_not_equal_double
 
+   !> @brief Assert that two character strings are not equal.
+   !> @param expected String value to compare.
+   !> @param actual   String value to compare.
    subroutine assert_not_equal_string(expected, actual)
-      implicit none
-      character(len = *) :: expected, actual
+      character(len=*), intent(in) :: expected, actual
       type(f_c_string_t) :: f_c_string_expected, f_c_string_actual
       integer :: status
       interface
          subroutine c_assert_not_equal_string(expected, actual) bind(C)
             import :: c_ptr
             type(c_ptr), value, intent(in) :: expected, actual
-         end subroutine
+         end subroutine c_assert_not_equal_string
       end interface
-      status = 0
+
       f_c_string_expected = f_c_string_t(expected)
-      f_c_string_actual = f_c_string_t(actual)
+      f_c_string_actual   = f_c_string_t(actual)
       status = f_c_string_expected%to_c()
       status = f_c_string_actual%to_c()
-      call c_assert_not_equal_string(&
+      call c_assert_not_equal_string( &
             f_c_string_expected%get_c_string(), &
             f_c_string_actual%get_c_string())
    end subroutine assert_not_equal_string
 
+   !> @brief Assert that a logical condition is true.
+   !> @param condition Logical condition to check.
    subroutine assert_true(condition)
-      implicit none
       logical, intent(in) :: condition
       integer(c_int) :: i_condition
       interface
-         subroutine c_assert_true(condition) bind(C, name = "c_assert_true")
+         subroutine c_assert_true(condition) bind(C, name="c_assert_true")
             import :: c_int
             integer(c_int), value :: condition
-         end subroutine
+         end subroutine c_assert_true
       end interface
       i_condition = merge(1_c_int, 0_c_int, condition)
       call c_assert_true(i_condition)
    end subroutine assert_true
 
+   !> @brief Assert that a logical condition is false.
+   !> @param condition Logical condition to check.
    subroutine assert_false(condition)
-      implicit none
       logical, intent(in) :: condition
       integer(c_int) :: i_condition
       interface
-         subroutine c_assert_false(condition) bind(C, name = "c_assert_false")
+         subroutine c_assert_false(condition) bind(C, name="c_assert_false")
             import :: c_int
             integer(c_int), value :: condition
-         end subroutine
+         end subroutine c_assert_false
       end interface
       i_condition = merge(1_c_int, 0_c_int, condition)
       call c_assert_false(i_condition)
