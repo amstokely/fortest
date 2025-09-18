@@ -28,7 +28,7 @@ contains
         x = 1.5
         y = 2.5
         result = x * y
-        call assert_equal(result, 3.75)
+        call assert_equal(result, 3.75, abs_tol = 1.0e-6_real)
     end subroutine test_assert_equal_float
 
     !> @test Verify that 1.5d0 × 2.5d0 = 3.75d0 (double equality).

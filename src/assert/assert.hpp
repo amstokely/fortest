@@ -83,46 +83,85 @@ namespace Fortest {
 
     public:
         /**
-         * @brief Assert that two values are equal.
-         *
-         * Increments pass/fail counters accordingly.
-         *
-         * @tparam T Type of the values (must be equality-comparable).
-         * @param expected The expected value.
-         * @param actual   The actual value.
-         * @param logger   A logger instance.
-         */
+   * @brief Assert that two values are equal.
+   *
+   * For floating-point values, supports absolute and relative tolerance.
+   * For other types, uses exact equality.
+   *
+   * @tparam T Type of the values (must be equality-comparable).
+   * @param expected The expected value.
+   * @param actual   The actual value.
+   * @param logger   A logger instance.
+   * @param abs_tol  Absolute tolerance (for floating-point).
+   * @param rel_tol  Relative tolerance (for floating-point).
+   */
         template<typename T> void assert_equal(
             const T &expected, const T &actual,
-            const std::shared_ptr<Logger> &logger
+            const std::shared_ptr<Logger> &logger, double abs_tol = 0.0,
+            double rel_tol = 0.0
         ) {
-            if (expected == actual) {
+            bool pass = false;
+
+            if constexpr (std::is_floating_point_v<T>) {
+                double diff = std::abs(expected - actual);
+                pass = (diff <= abs_tol) || (diff <= rel_tol * std::max(
+                                                 std::abs(expected),
+                                                 std::abs(actual)
+                                             ));
+            } else {
+                pass = (expected == actual);
+            }
+
+            if (pass) {
                 ++m_num_passed;
+                logger->log("Values are equal", "PASS");
             } else {
                 ++m_num_failed;
+                logger->log("Values differ", "FAIL");
             }
         }
 
         /**
          * @brief Assert that two values are not equal.
          *
-         * Increments pass/fail counters accordingly.
+         * For floating-point values, supports absolute and relative tolerance.
+         * For other types, uses exact inequality.
          *
          * @tparam T Type of the values (must be equality-comparable).
          * @param expected The expected value.
          * @param actual   The actual value.
-         * @param logger   A logger instance (optional).
+         * @param logger   A logger instance.
+         * @param abs_tol  Absolute tolerance (for floating-point).
+         * @param rel_tol  Relative tolerance (for floating-point).
          */
         template<typename T> void assert_not_equal(
             const T &expected, const T &actual,
-            const std::shared_ptr<Logger> &logger
+            const std::shared_ptr<Logger> &logger, double abs_tol = 0.0,
+            double rel_tol = 0.0
         ) {
-            if (expected != actual) {
+            bool pass = false;
+
+            if constexpr (std::is_floating_point_v<T>) {
+                double diff = std::abs(expected - actual);
+                bool nearly_equal = (diff <= abs_tol) ||
+                                    (diff <= rel_tol * std::max(
+                                         std::abs(expected),
+                                         std::abs(actual)
+                                     ));
+                pass = !nearly_equal;
+            } else {
+                pass = (expected != actual);
+            }
+
+            if (pass) {
                 ++m_num_passed;
+                logger->log("Values are not equal", "PASS");
             } else {
                 ++m_num_failed;
+                logger->log("Values unexpectedly equal", "FAIL");
             }
         }
+
 
         /**
          * @brief Assert that a condition is true.

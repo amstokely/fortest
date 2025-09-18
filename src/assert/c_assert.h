@@ -17,6 +17,7 @@
 /// Supported assertions:
 /// - Boolean checks (`true` / `false`)
 /// - Equality / inequality for integers, floats, doubles, and strings
+/// - Floating-point comparisons support absolute and relative tolerances
 ///
 /// All results are logged through the global logger instance.
 
@@ -39,87 +40,81 @@ void c_assert_false(const int condition) {
 }
 
 /// @brief Assert that two integers are equal.
-/// @param expected Expected integer value.
-/// @param actual Actual integer value.
 void c_assert_equal_int(const int expected, const int actual) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
     assert->assert_equal(expected, actual, logger);
 }
 
-/// @brief Assert that two doubles are equal.
+/// @brief Assert that two doubles are equal with tolerance.
 /// @param expected Expected double value.
-/// @param actual Actual double value.
-void c_assert_equal_double(const double expected, const double actual) {
+/// @param actual   Actual double value.
+/// @param abs_tol  Absolute tolerance.
+/// @param rel_tol  Relative tolerance.
+void c_assert_equal_double(const double expected, const double actual,
+                           const double abs_tol, const double rel_tol) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
-    assert->assert_equal(expected, actual, logger);
+    assert->assert_equal(expected, actual, logger, abs_tol, rel_tol);
+}
+
+/// @brief Assert that two floats are equal with tolerance.
+/// @param expected Expected float value.
+/// @param actual   Actual float value.
+/// @param abs_tol  Absolute tolerance.
+/// @param rel_tol  Relative tolerance.
+void c_assert_equal_float(const float expected, const float actual,
+                          const double abs_tol, const double rel_tol) {
+    auto logger = Fortest::GlobalLogger::instance();
+    auto assert = Fortest::GlobalAssert::instance();
+    assert->assert_equal(expected, actual, logger, abs_tol, rel_tol);
 }
 
 /// @brief Assert that two C strings are equal.
-/// @param expected Expected C string.
-/// @param actual Actual C string.
 void c_assert_equal_string(const char *expected, const char *actual) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
-    assert->assert_equal(
-        std::string(expected), std::string(actual), logger
-    );
-}
-
-/// @brief Assert that two floats are equal.
-/// @param expected Expected float value.
-/// @param actual Actual float value.
-void c_assert_equal_float(const float expected, const float actual) {
-    auto logger = Fortest::GlobalLogger::instance();
-    auto assert = Fortest::GlobalAssert::instance();
-    assert->assert_equal(expected, actual, logger);
+    assert->assert_equal(std::string(expected), std::string(actual), logger);
 }
 
 /// @brief Assert that two integers are not equal.
-/// @param expected First integer value.
-/// @param actual Second integer value.
 void c_assert_not_equal_int(const int expected, const int actual) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
     assert->assert_not_equal(expected, actual, logger);
 }
 
-/// @brief Assert that two doubles are not equal.
+/// @brief Assert that two doubles are not equal with tolerance.
 /// @param expected First double value.
-/// @param actual Second double value.
-void c_assert_not_equal_double(
-    const double expected, const double actual
-) {
+/// @param actual   Second double value.
+/// @param abs_tol  Absolute tolerance.
+/// @param rel_tol  Relative tolerance.
+void c_assert_not_equal_double(const double expected, const double actual,
+                               const double abs_tol, const double rel_tol) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
-    assert->assert_not_equal(expected, actual, logger);
+    assert->assert_not_equal(expected, actual, logger, abs_tol, rel_tol);
 }
 
-/// @brief Assert that two floats are not equal.
+/// @brief Assert that two floats are not equal with tolerance.
 /// @param expected First float value.
-/// @param actual Second float value.
-void c_assert_not_equal_float(
-    const float expected, const float actual
-) {
+/// @param actual   Second float value.
+/// @param abs_tol  Absolute tolerance.
+/// @param rel_tol  Relative tolerance.
+void c_assert_not_equal_float(const float expected, const float actual,
+                              const double abs_tol, const double rel_tol) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
-    assert->assert_not_equal(expected, actual, logger);
+    assert->assert_not_equal(expected, actual, logger, abs_tol, rel_tol);
 }
 
 /// @brief Assert that two C strings are not equal.
-/// @param expected First C string.
-/// @param actual Second C string.
-void c_assert_not_equal_string(
-    const char *expected, const char *actual
-) {
+void c_assert_not_equal_string(const char *expected, const char *actual) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
-    assert->assert_not_equal(
-        std::string(expected), std::string(actual), logger
-    );
+    assert->assert_not_equal(std::string(expected), std::string(actual), logger);
 }
 
 } // extern "C"
 
-#endif //C_ASSERT_HPP
+#endif // C_ASSERT_HPP

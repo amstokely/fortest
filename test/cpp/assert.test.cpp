@@ -161,3 +161,43 @@ TEST_F(AssertTest, NotEqualHandlesFloatingPointValues) {
     test_assert.assert_not_equal(3.14, 2.71, null_logger);
     expect_summary(1, 0);
 }
+
+/// @test AssertEqual with absolute tolerance passes for close doubles.
+TEST_F(AssertTest, Equal_PassesWithinAbsoluteTolerance) {
+    double a = 1.0000001;
+    double b = 1.0;
+    double abs_tol = 1e-5;
+
+    test_assert.assert_equal(a, b, null_logger, abs_tol, 0.0);
+    expect_summary(1, 0);
+}
+
+/// @test AssertEqual with absolute tolerance fails when difference is too large.
+TEST_F(AssertTest, Equal_FailsOutsideAbsoluteTolerance) {
+    double a = 1.1;
+    double b = 1.0;
+    double abs_tol = 1e-3;
+
+    test_assert.assert_equal(a, b, null_logger, abs_tol, 0.0);
+    expect_summary(0, 1);
+}
+
+/// @test AssertEqual with relative tolerance passes for proportionally close values.
+TEST_F(AssertTest, Equal_PassesWithinRelativeTolerance) {
+    double a = 1000.0;
+    double b = 1001.0;
+    double rel_tol = 0.01; // within 1%
+
+    test_assert.assert_equal(a, b, null_logger, 0.0, rel_tol);
+    expect_summary(1, 0);
+}
+
+/// @test AssertEqual with relative tolerance fails when values differ too much.
+TEST_F(AssertTest, Equal_FailsOutsideRelativeTolerance) {
+    double a = 1000.0;
+    double b = 1050.0;
+    double rel_tol = 0.01; // 1% tolerance not enough
+
+    test_assert.assert_equal(a, b, null_logger, 0.0, rel_tol);
+    expect_summary(0, 1);
+}
