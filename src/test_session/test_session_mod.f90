@@ -29,14 +29,14 @@ module fortest_test_session
 contains
 
     !> Register a new test suite and add it to the linked list
-    subroutine register_test_suite(this, name)
+    subroutine register_test_suite(this, test_suite_name)
         use fortest_test_suite, only : test_suite_t
         use f_c_string_t_mod, only : f_c_string_t
 
         class(test_session_t), intent(inout) :: this
-        character(len = *), intent(in) :: name
+        character(len = *), intent(in) :: test_suite_name
         type(test_suite_t) :: test_suite
-        type(f_c_string_t) :: f_c_string_name
+        type(f_c_string_t) :: f_c_string_test_suite_name
         type(test_suite_node_t), pointer :: new_node
         integer :: status
 
@@ -48,10 +48,10 @@ contains
         end interface
 
         ! Initialize the new suite
-        test_suite%name = name
-        f_c_string_name = f_c_string_t(name)
-        status = f_c_string_name%to_c()
-        call c_register_test_suite(f_c_string_name%get_c_string())
+        test_suite%name = test_suite_name
+        f_c_string_test_suite_name = f_c_string_t(test_suite_name)
+        status = f_c_string_test_suite_name%to_c()
+        call c_register_test_suite(f_c_string_test_suite_name%get_c_string())
 
         ! Create a new linked list node
         allocate(new_node)

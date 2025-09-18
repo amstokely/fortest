@@ -49,6 +49,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_equal(t%int_a + t%int_b, t%int_c)
+      ! This will cause subsequent tests to fail if not reset.
       t%int_a = 100
       t%int_b = 100
       t%int_c = 100
@@ -61,6 +62,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_equal(t%real_a * t%real_b, t%real_c)
+      ! This will cause subsequent tests to fail if not reset.
       t%real_a = 100.0
       t%real_b = 100.0
       t%real_c = 100.0
@@ -73,6 +75,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_equal(t%double_a * t%double_b, t%double_c)
+      ! This will cause subsequent tests to fail if not reset.
       t%double_a = 100.0d0
       t%double_b = 100.0d0
       t%double_c = 100.0d0
@@ -85,6 +88,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_equal(trim(t%str_a) // " " // trim(t%str_b), trim(t%str_c))
+      ! This will cause subsequent tests to fail if not reset.
       t%str_a = "a"
       t%str_b = "a"
       t%str_c = "a"
@@ -97,6 +101,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_not_equal(t%int_a, t%int_c)
+      ! This will cause subsequent tests to fail if not reset.
       t%int_a = 100
       t%int_b = 100
       t%int_c = 100
@@ -109,6 +114,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_not_equal(t%real_a, t%real_c)
+      ! This will cause subsequent tests to fail if not reset.
       t%real_a = 100.0
       t%real_b = 100.0
       t%real_c = 100.0
@@ -121,6 +127,7 @@ contains
       type(assert_fixture_t), pointer :: t
       call c_f_pointer(t_ptr, t)
       call assert_not_equal(t%double_b, t%double_c)
+      ! This will cause subsequent tests to fail if not reset.
       t%double_a = 100.0d0
       t%double_b = 100.0d0
       t%double_c = 100.0d0
@@ -160,7 +167,7 @@ end module test_assert_test_fixture_mod
 
 
 !> Main program to run all assert tests.
-program test_assert_test_fixture
+program test_assert_with_test_fixture
    use iso_c_binding, only: c_ptr, c_loc
    use fortest_test_session, only: test_session_t, test_suite_t
    use test_assert_test_fixture_mod, only: assert_fixture_t, &
@@ -178,7 +185,7 @@ program test_assert_test_fixture
 
    assert_fixture_ptr = c_loc(assert_fixture)
 
-   call test_session%register_test_suite("test_suite")
+   call test_session%register_test_suite(test_suite_name = "test_suite")
    call test_session%register_fixture(&
          setup = setup_assert_fixture, &
          teardown = teardown_assert_fixture, &
@@ -187,17 +194,56 @@ program test_assert_test_fixture
          test_suite_name = "test_suite" &
          )
 
-   call test_session%register_test("test_suite", "test_assert_equal_int", test_assert_equal_int)
-   call test_session%register_test("test_suite", "test_assert_equal_float", test_assert_equal_float)
-   call test_session%register_test("test_suite", "test_assert_equal_double", test_assert_equal_double)
-   call test_session%register_test("test_suite", "test_assert_equal_string", test_assert_equal_string)
-   call test_session%register_test("test_suite", "test_assert_not_equal_int", test_assert_not_equal_int)
-   call test_session%register_test("test_suite", "test_assert_not_equal_float", test_assert_not_equal_float)
-   call test_session%register_test("test_suite", "test_assert_not_equal_double", test_assert_not_equal_double)
-   call test_session%register_test("test_suite", "test_assert_not_equal_string", test_assert_not_equal_string)
-   call test_session%register_test("test_suite", "test_assert_true", test_assert_true)
-   call test_session%register_test("test_suite", "test_assert_false", test_assert_false)
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_equal_int", &
+         test = test_assert_equal_int)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_equal_float", &
+         test = test_assert_equal_float)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_equal_double", &
+         test = test_assert_equal_double)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_equal_string", &
+         test = test_assert_equal_string)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_not_equal_int", &
+         test = test_assert_not_equal_int)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_not_equal_float", &
+         test = test_assert_not_equal_float)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_not_equal_double", &
+         test = test_assert_not_equal_double)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_not_equal_string", &
+         test = test_assert_not_equal_string)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_true", &
+         test = test_assert_true)
+
+   call test_session%register_test(&
+         test_suite_name = "test_suite", &
+         test_name = "test_assert_false", &
+         test = test_assert_false)
 
    call test_session%run()
    call test_session%finalize()
-end program test_assert_test_fixture
+end program test_assert_with_test_fixture
