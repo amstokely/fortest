@@ -1,6 +1,4 @@
-Here’s an updated **README** that adds a tutorial section for the math operations example in the `examples/` directory:
 
-````markdown
 # Fortest – A Fortran Test Framework
 
 **Fortest** is a lightweight unit testing framework designed specifically for Fortran.  
