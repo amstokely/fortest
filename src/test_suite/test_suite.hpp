@@ -63,7 +63,7 @@ namespace Fortest {
                     }
                     break;
             }
-            for (auto &[test_name, test]: m_tests) {
+            for (auto &test: m_tests | std::views::values) {
                 test.add_fixture(std::make_shared<Fixture<void>>(fixture));
             }
         }
