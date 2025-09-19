@@ -54,3 +54,5 @@ Makefile
 # Generated test files
 Testing/
 
+cmake-build-debug/
+

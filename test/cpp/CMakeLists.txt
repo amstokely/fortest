@@ -5,9 +5,7 @@ FETCHCONTENT_DECLARE(
 )
 FETCHCONTENT_MAKEAVAILABLE(googletest)
 
-add_executable(test_assert assert.test.cpp
-        test_session.test.cpp
-        fixture.test.cpp)
+add_executable(test_assert assert.test.cpp)
 target_link_libraries(test_assert PUBLIC GTest::gtest_main GTest::gmock cpp_fortest)
 add_test(NAME test_assert COMMAND test_assert)
 

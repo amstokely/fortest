@@ -4,7 +4,6 @@
 #include "test.hpp"
 
 namespace Fortest {
-
     /**
      * @brief Represents a collection of tests within a suite.
      *
@@ -15,15 +14,19 @@ namespace Fortest {
      *
      * @tparam Logger A logger type satisfying LoggerLike.
      */
-    template <LoggerLike Logger>
-    class TestSuite {
-        std::string m_name;  //!< Name of the test suite
-        std::map<std::string, Test> m_tests; //!< Map of test names to test objects
-        std::shared_ptr<Fixture<void>> m_test_fixture;    //!< Test-level fixture
-        std::shared_ptr<Fixture<void>> m_suite_fixture;   //!< Suite-level fixture
-        std::shared_ptr<Fixture<void>> m_session_fixture; //!< Session-level fixture
+    template<LoggerLike Logger> class TestSuite {
+        std::string m_name; //!< Name of the test suite
+        std::map<std::string, Test> m_tests;
+        //!< Map of test names to test objects
+        std::shared_ptr<Fixture<void> > m_test_fixture;
+        //!< Test-level fixture
+        std::shared_ptr<Fixture<void> > m_suite_fixture;
+        //!< Suite-level fixture
+        std::shared_ptr<Fixture<void> > m_session_fixture;
+        //!< Session-level fixture
         Assert<Logger> &m_assert; //!< Assertion engine
-        std::unordered_map<std::string, Test::Status> m_statuses; //!< Status of each test
+        std::map<std::string, Test::Status> m_statuses;
+        //!< Status of each test
 
     public:
         /**
@@ -32,7 +35,8 @@ namespace Fortest {
          * @param assert Reference to the assertion manager.
          */
         TestSuite(std::string name, Assert<Logger> &assert)
-            : m_name(std::move(name)), m_assert(assert) {}
+            : m_name(std::move(name)), m_assert(assert) {
+        }
 
         /**
          * @brief Add a fixture to the suite.
@@ -41,14 +45,26 @@ namespace Fortest {
         void add_fixture(const Fixture<void> &fixture) {
             switch (fixture.get_scope()) {
                 case Scope::Session:
-                    m_session_fixture = std::make_shared<Fixture<void>>(fixture);
-                    break;
+                    if (!m_session_fixture) {
+                        m_session_fixture = std::make_shared<Fixture<
+                            void> >(fixture);
+                    }
+                break;
                 case Scope::Suite:
-                    m_suite_fixture = std::make_shared<Fixture<void>>(fixture);
+                    if (!m_suite_fixture) {
+                        m_suite_fixture = std::make_shared<Fixture<
+                            void> >(fixture);
+                    }
                     break;
                 case Scope::Test:
-                    m_test_fixture = std::make_shared<Fixture<void>>(fixture);
+                    if (!m_test_fixture) {
+                        m_test_fixture = std::make_shared<Fixture<
+                            void> >(fixture);
+                    }
                     break;
+            }
+            for (auto &[test_name, test]: m_tests) {
+                test.add_fixture(std::make_shared<Fixture<void>>(fixture));
             }
         }
 
@@ -76,10 +92,12 @@ namespace Fortest {
         }
 
         /// @brief Get the name of this test suite.
-        [[nodiscard]] const std::string &get_name() const { return m_name; }
+        [[nodiscard]] const std::string &get_name() const {
+            return m_name;
+        }
 
         /// @brief Get a map of test names to their statuses.
-        [[nodiscard]] const std::unordered_map<std::string, Test::Status> &
+        [[nodiscard]] const std::map<std::string, Test::Status> &
         get_statuses() const {
             return m_statuses;
         }
@@ -94,7 +112,7 @@ namespace Fortest {
                 m_suite_fixture->setup();
             }
 
-            for (auto &[test_name, test] : m_tests) {
+            for (auto &[test_name, test]: m_tests) {
                 logger->log("Running test: " + test_name, "INFO");
                 test.run(logger, m_assert);
                 m_statuses[test_name] = test.get_status();
@@ -111,7 +129,6 @@ namespace Fortest {
             }
         }
     };
-
 } // namespace Fortest
 
 #endif // FORTEST_TEST_SUITE_HPP

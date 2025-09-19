@@ -1,133 +1,145 @@
-#include "test_session.hpp"
+#include "test_suite.hpp"
+#include "assert.hpp"
+#include "logging.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <sstream>
 
 using ::testing::HasSubstr;
-using namespace Fortest;
 
-// A simple logger for testing that writes into an ostringstream
-class OStreamLogger : public Logger {
+// Simple ostream logger for capturing output
+class OStreamLogger : public Fortest::Logger {
 public:
-    explicit OStreamLogger(std::ostream &out) : Logger(out) {}
+    explicit OStreamLogger(std::ostream &out) : Logger(out), out_(out) {}
+    void log(const std::string &msg, const std::string &tag) {
+        out_ << "[" << tag << "] " << msg << "\n";
+    }
+private:
+    std::ostream &out_;
 };
 
-class TestSessionFixture : public ::testing::Test {
+class TestSuiteBehavior : public ::testing::Test {
 protected:
     std::ostringstream buffer;
     std::shared_ptr<OStreamLogger> logger;
-    Assert<OStreamLogger> assert_obj;  // for TestSuite
+    Fortest::Assert<OStreamLogger> assert_obj;
 
     void SetUp() override {
         logger = std::make_shared<OStreamLogger>(buffer);
         assert_obj.reset();
     }
 
-    std::string get_output() { return buffer.str(); }
-
-    void clear_output() {
-        buffer.str("");
-        buffer.clear();
-    }
+    std::string get_output() const { return buffer.str(); }
+    void clear_output() { buffer.str(""); buffer.clear(); }
 };
 
 /**
- * @brief Behavior: Adding a test suite stores it and allows retrieval by name.
+ * @brief Behavior: Suite returns its name correctly.
  */
-TEST_F(TestSessionFixture, AddTestSuite) {
-    TestSession<OStreamLogger> test_session(assert_obj);
-    auto &suite = test_session.add_test_suite("suite1");
-    EXPECT_EQ(suite.get_name(), "suite1");
-}
-
-// ---------------------
-// Fixture-related tests
-// ---------------------
-
-/**
- * @brief Behavior: A session-level fixture can be added successfully.
- */
-TEST_F(TestSessionFixture, AddSessionFixtureSuccess) {
-    TestSession<OStreamLogger> test_session(assert_obj);
-
-    Fixture<void> session_fixture(nullptr, nullptr, nullptr, Scope::Session);
-    EXPECT_NO_THROW(test_session.add_fixture(session_fixture));
+TEST_F(TestSuiteBehavior, GetNameReturnsCorrectName) {
+    Fortest::TestSuite<OStreamLogger> ts("AlphaSuite", assert_obj);
+    EXPECT_EQ(ts.get_name(), "AlphaSuite");
 }
 
 /**
- * @brief Behavior: Adding a non-session fixture at session scope throws.
+ * @brief Behavior: Adding and running a passing test records PASS status.
  */
-TEST_F(TestSessionFixture, AddSessionFixtureWrongScopeThrows) {
-    TestSession<OStreamLogger> test_session(assert_obj);
+TEST_F(TestSuiteBehavior, PassingTestReportsPass) {
+    Fortest::TestSuite<OStreamLogger> ts("PassSuite", assert_obj);
 
-    Fixture<void> bad_fixture(nullptr, nullptr, nullptr, Scope::Test);
-    EXPECT_THROW(test_session.add_fixture(bad_fixture), std::runtime_error);
-}
-
-/**
- * @brief Behavior: Adding a test fixture to a valid suite succeeds.
- */
-TEST_F(TestSessionFixture, AddSuiteFixtureSuccess) {
-    TestSession<OStreamLogger> test_session(assert_obj);
-    test_session.add_test_suite("suite1");
-
-    Fixture<void> test_fixture(nullptr, nullptr, nullptr, Scope::Test);
-    EXPECT_NO_THROW(test_session.add_fixture("suite1", test_fixture));
-}
-
-/**
- * @brief Behavior: Adding a fixture with wrong scope to a suite throws.
- */
-TEST_F(TestSessionFixture, AddSuiteFixtureWrongScopeThrows) {
-    TestSession<OStreamLogger> test_session(assert_obj);
-    test_session.add_test_suite("suite1");
-
-    // Session fixture is not valid at suite level
-    Fixture<void> bad_fixture(nullptr, nullptr, nullptr, Scope::Session);
-    EXPECT_THROW(test_session.add_fixture("suite1", bad_fixture), std::runtime_error);
-}
-
-/**
- * @brief Behavior: Adding a fixture to a non-existent suite throws.
- */
-TEST_F(TestSessionFixture, AddSuiteFixtureSuiteDoesNotExistThrows) {
-    TestSession<OStreamLogger> test_session(assert_obj);
-
-    Fixture<void> test_fixture(nullptr, nullptr, nullptr, Scope::Test);
-    EXPECT_THROW(test_session.add_fixture("nosuite", test_fixture), std::runtime_error);
-}
-
-// ---------------------
-// Test-related tests
-// ---------------------
-
-/**
- * @brief Behavior: A test can be added to a suite and is executed when run.
- */
-TEST_F(TestSessionFixture, AddTestSuccess) {
-    TestSession<OStreamLogger> test_session(assert_obj);
-    test_session.add_test_suite("suite1");
-
-    bool called = false;
-    test_session.add_test("suite1", "test1", [&](void*, void*, void*) {
-        called = true;
+    ts.add_test("always_pass", [&](void*, void*, void*) {
+        assert_obj.assert_true(true, logger);
     });
 
-    // Run all suites
-    test_session.run(logger);
+    ts.run(logger);
 
-    EXPECT_TRUE(called);
-    EXPECT_THAT(get_output(), HasSubstr("Running test: test1"));
+    auto statuses = ts.get_statuses();
+    EXPECT_EQ(statuses.at("always_pass"), Fortest::Test::Status::PASS);
+
+    std::string out = get_output();
+    EXPECT_THAT(out, HasSubstr("Running test: always_pass"));
+    EXPECT_THAT(out, HasSubstr("Test passed: always_pass"));
 }
 
 /**
- * @brief Behavior: Adding a test to a non-existent suite throws.
+ * @brief Behavior: Adding and running a failing test records FAIL status.
  */
-TEST_F(TestSessionFixture, AddTestSuiteDoesNotExistThrows) {
-    TestSession<OStreamLogger> test_session(assert_obj);
+TEST_F(TestSuiteBehavior, FailingTestReportsFail) {
+    Fortest::TestSuite<OStreamLogger> ts("FailSuite", assert_obj);
 
-    EXPECT_THROW(
-        test_session.add_test("nosuite", "test1", [](void*, void*, void*) {}),
-        std::runtime_error
+    ts.add_test("always_fail", [&](void*, void*, void*) {
+        assert_obj.assert_true(false, logger);
+    });
+
+    ts.run(logger);
+
+    auto statuses = ts.get_statuses();
+    EXPECT_EQ(statuses.at("always_fail"), Fortest::Test::Status::FAIL);
+
+    std::string out = get_output();
+    EXPECT_THAT(out, HasSubstr("Running test: always_fail"));
+    EXPECT_THAT(out, HasSubstr("Test failed: always_fail"));
+}
+
+/**
+ * @brief Behavior: Suite-level fixture setup and teardown wrap all tests.
+ */
+TEST_F(TestSuiteBehavior, SuiteFixtureSetupAndTeardownCalled) {
+    bool setup_called = false;
+    bool teardown_called = false;
+
+    Fortest::TestSuite<OStreamLogger> ts("WithFixture", assert_obj);
+
+    Fortest::Fixture<void> suite_fixture(
+        [&](void*) { setup_called = true; },
+        [&](void*) { teardown_called = true; },
+        nullptr,
+        Fortest::Scope::Suite
     );
+    ts.add_fixture(suite_fixture);
+
+    ts.add_test("dummy", [&](void*, void*, void*) {
+        assert_obj.assert_true(true, logger);
+    });
+
+    ts.run(logger);
+
+    EXPECT_TRUE(setup_called);
+    EXPECT_TRUE(teardown_called);
+}
+
+/**
+ * @brief Behavior: If a suite fixture is added *after* registering tests,
+ * it should still be applied to all tests (retroactive binding).
+ */
+TEST_F(TestSuiteBehavior, SuiteFixtureAddedAfterTestsAppliesToAllTests) {
+    bool setup_called = false;
+    bool teardown_called = false;
+
+    Fortest::TestSuite<OStreamLogger> ts("RetroFixture", assert_obj);
+
+    ts.add_test("test1", [&](void*, void*, void*) {
+        assert_obj.assert_true(setup_called, logger);
+    });
+    ts.add_test("test2", [&](void*, void*, void*) {
+        assert_obj.assert_true(setup_called, logger);
+    });
+
+    // Add suite fixture AFTER tests are already defined
+    Fortest::Fixture<void> suite_fixture(
+        [&](void*) { setup_called = true; },
+        [&](void*) { teardown_called = true; },
+        nullptr,
+        Fortest::Scope::Suite
+    );
+    ts.add_fixture(suite_fixture);
+
+    ts.run(logger);
+
+    EXPECT_TRUE(setup_called);
+    EXPECT_TRUE(teardown_called);
+
+    auto statuses = ts.get_statuses();
+    EXPECT_EQ(statuses.at("test1"), Fortest::Test::Status::PASS);
+    EXPECT_EQ(statuses.at("test2"), Fortest::Test::Status::PASS);
 }

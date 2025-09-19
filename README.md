@@ -1,7 +1,6 @@
-
 # Fortest – A Fortran Test Framework
 
-**Fortest** is a lightweight unit testing framework designed specifically for Fortran.  
+**Fortest** is a lightweight unit testing framework designed specifically for Fortran.
 Its purpose is to make writing tests straightforward, lowering the barrier for developers who want to improve the reliability of their code.
 
 All tests are written in **pure, standard Fortran** with no external libraries, complex OOP features, or compiler-specific extensions required.
@@ -10,29 +9,29 @@ All tests are written in **pure, standard Fortran** with no external libraries, 
 
 ## Features
 
-* **Pure Fortran tests**  
+* **Pure Fortran tests**
   Write tests in plain Fortran. Test code can double as example code and works seamlessly with IDEs and tooling.
 
-* **Zero external dependencies**  
+* **Zero external dependencies**
   No need to install or link against third-party libraries.
 
-* **Simple, familiar syntax**  
+* **Simple, familiar syntax**
   Assertions cover common checks (equality, inequality, logical conditions, string comparisons, exceptions) without requiring advanced Fortran OOP features.
 
-* **Fixture support**  
+* **Fixture support**
   Reuse setup and teardown logic with flexible scopes:
 
-  * **test**: run before and after each test, ideal for isolating repetitive setup and teardown code  
-  * **suite**: run once per suite, useful for initializing resources shared by related tests  
-  * **session**: run once for the entire session, well suited for MPI-based tests or tests that depend on global state  
+  * **test**: run before and after each test, ideal for isolating repetitive setup and teardown code
+  * **suite**: run once per suite, useful for initializing resources shared by related tests
+  * **session**: run once for the entire session, well suited for MPI-based tests or tests that depend on global state
 
-* **Fixtures are optional**  
+* **Fixtures are optional**
   Simple tests do not need fixtures.
 
-* **Structured logging**  
+* **Structured logging**
   Automatic logging of sessions, suites, tests, and assertions with clear, colorized pass and fail output.
 
-* **Easy build system integration**  
+* **Easy build system integration**
   Works out of the box with **CMake** and **GNU Make**.
 
 ---
@@ -55,7 +54,7 @@ make install
 
 # (Optional) Run the test suite
 ctest
-````
+```
 
 After installation, the CMake configuration files are located in:
 
@@ -75,6 +74,27 @@ You can then link against Fortest in your project with:
 ```cmake
 target_link_libraries(mytests PRIVATE Fortest::fortest)
 ```
+
+### The `fortest-config` Utility
+
+Fortest provides a helper executable, **`fortest-config`**, which makes it easier to integrate with external build systems.
+This binary is built into both:
+
+* `<build_dir>/bin` (before installation)
+* `<install_dir>/bin` (after installation)
+
+By default, Fortest installs into `<build_dir>/install`.
+
+The `fortest-config` utility can be used to query installation details:
+
+* `--libdir` → Library directory
+* `--moddir` → Fortran module directory
+* `--libs`   → Linking flags required for the compiler
+* `--includedir` → Include directory
+* `--prefix` → Full install prefix directory
+* `--cmake-prefix` → Path to the CMake package configuration
+
+This makes it easy to integrate Fortest into Makefiles, custom scripts, or Fortran build systems without hardcoding paths.
 
 ---
 

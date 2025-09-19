@@ -23,7 +23,7 @@ namespace Fortest {
     template <LoggerLike Logger>
     class TestSession {
         Assert<Logger> &m_assert;  //!< Assertion engine for all tests
-        std::unordered_map<std::string,
+        std::map<std::string,
             std::unique_ptr<TestSuite<Logger>>> m_suites; //!< Registered test suites
         std::shared_ptr<Fixture<void>> m_session_fixture; //!< Optional session-level fixture
 
@@ -47,6 +47,9 @@ namespace Fortest {
             auto suite = std::make_unique<TestSuite<Logger>>(name, m_assert);
             auto &ref = *suite;
             m_suites[name] = std::move(suite);
+            if (m_session_fixture) {
+                m_suites[name]->add_fixture(*m_session_fixture);
+            }
             return ref;
         }
 
@@ -62,6 +65,9 @@ namespace Fortest {
                 );
             }
             m_session_fixture = std::make_shared<Fixture<void>>(fixture);
+            for (auto &[name, suite] : m_suites) {
+                suite->add_fixture(fixture);
+            }
         }
 
         /**
@@ -155,7 +161,7 @@ namespace Fortest {
          * @return Map of test names to statuses.
          * @throws std::runtime_error if suite does not exist.
          */
-        [[nodiscard]] std::unordered_map<std::string, Test::Status>
+        [[nodiscard]] std::map<std::string, Test::Status>
         get_test_suite_status(const std::string &suite_name) const {
             auto it = m_suites.find(suite_name);
             if (it == m_suites.end()) {

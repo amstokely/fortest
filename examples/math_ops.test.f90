@@ -230,7 +230,7 @@ program test_math_ops
    suite_ptr = c_loc(suite_fix)
    test_ptr  = c_loc(test_fix)
 
-   call session%register_test_suite("matrix_mul_suite")
+   call session%register_test_suite("math_ops")
 
    ! Register suite-level fixture
    call session%register_fixture( &
@@ -238,7 +238,7 @@ program test_math_ops
            teardown = teardown_suite_fixture, &
            args = suite_ptr, &
            scope = "suite", &
-           test_suite_name = "matrix_mul_suite")
+           test_suite_name = "math_ops")
 
    ! Register test-level fixture
    call session%register_fixture( &
@@ -246,20 +246,20 @@ program test_math_ops
            teardown = teardown_test_fixture, &
            args = test_ptr, &
            scope = "test", &
-           test_suite_name = "matrix_mul_suite")
+           test_suite_name = "math_ops")
 
    ! Register all tests
-   call session%register_test("matrix_mul_suite", "test_mat_mul_basic", test_mat_mul_basic)
-   call session%register_test("matrix_mul_suite", "test_mat_mul_full", test_mat_mul_full)
-   call session%register_test("matrix_mul_suite", "test_mat_mul_identity", test_mat_mul_identity)
-   call session%register_test("matrix_mul_suite", "test_mat_mul_zero", test_mat_mul_zero)
-   call session%register_test("matrix_mul_suite", "test_cross_product_expected", test_cross_product_expected)
-   call session%register_test("matrix_mul_suite", "test_cross_product_anticommutative", test_cross_product_anticommutative)
-   call session%register_test("matrix_mul_suite", "test_cross_product_parallel", test_cross_product_parallel)
-   call session%register_test("matrix_mul_suite", "test_cross_product_perpendicularity", test_cross_product_perpendicularity)
-   call session%register_test("matrix_mul_suite", "test_normalize_vector_length", test_normalize_vector_length)
-   call session%register_test("matrix_mul_suite", "test_normalize_vector_direction", test_normalize_vector_direction)
-   call session%register_test("matrix_mul_suite", "test_normalize_zero_vector", test_normalize_zero_vector)
+   call session%register_test("math_ops", "test_mat_mul_basic", test_mat_mul_basic)
+   call session%register_test("math_ops", "test_mat_mul_full", test_mat_mul_full)
+   call session%register_test("math_ops", "test_mat_mul_identity", test_mat_mul_identity)
+   call session%register_test("math_ops", "test_mat_mul_zero", test_mat_mul_zero)
+   call session%register_test("math_ops", "test_cross_product_expected", test_cross_product_expected)
+   call session%register_test("math_ops", "test_cross_product_anticommutative", test_cross_product_anticommutative)
+   call session%register_test("math_ops", "test_cross_product_parallel", test_cross_product_parallel)
+   call session%register_test("math_ops", "test_cross_product_perpendicularity", test_cross_product_perpendicularity)
+   call session%register_test("math_ops", "test_normalize_vector_length", test_normalize_vector_length)
+   call session%register_test("math_ops", "test_normalize_vector_direction", test_normalize_vector_direction)
+   call session%register_test("math_ops", "test_normalize_zero_vector", test_normalize_zero_vector)
 
    call session%run()
    call session%finalize()
