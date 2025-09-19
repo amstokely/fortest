@@ -62,8 +62,8 @@ contains
    subroutine assert_equal_float(expected, actual, abs_tol, rel_tol)
       use iso_c_binding, only: c_float, c_double
       real(c_float), intent(in) :: expected, actual
-      real(c_double), intent(in), optional :: abs_tol, rel_tol
-      real(c_double) :: a_tol, r_tol
+      real(c_float), intent(in), optional :: abs_tol, rel_tol
+      real(c_float) :: a_tol, r_tol
 
       interface
          subroutine c_assert_equal_float(expected, actual, abs_tol, rel_tol) bind(C)
@@ -159,8 +159,8 @@ contains
    subroutine assert_not_equal_float(expected, actual, abs_tol, rel_tol)
       use iso_c_binding, only: c_float, c_double
       real(c_float), intent(in) :: expected, actual
-      real(c_double), intent(in), optional :: abs_tol, rel_tol
-      real(c_double) :: a_tol, r_tol
+      real(c_float), intent(in), optional :: abs_tol, rel_tol
+      real(c_float) :: a_tol, r_tol
 
       interface
          subroutine c_assert_not_equal_float(expected, actual, abs_tol, rel_tol) bind(C)

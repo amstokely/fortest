@@ -1,6 +1,3 @@
-!===========================================================
-! System Under Test: Matrix Multiplication
-!===========================================================
 module math_ops_mod
    implicit none
    private

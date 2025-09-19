@@ -1,3 +1,14 @@
+!> @brief Unit tests for math operations using Fortest.
+!>
+!> @details
+!> This module defines tests for:
+!> - Matrix multiplication (`mat_mul`)
+!> - Cross product (`cross_product`)
+!> - Vector normalization (`normalize_vector`)
+!>
+!> Tests rely on fixtures provided by `math_ops_fixture`:
+!> - Suite-level fixture holds constant matrices and vectors.
+!> - Test-level fixture provides scratch space reset before each test.
 module test_math_ops_mod
    use iso_c_binding, only: c_ptr, c_f_pointer
    use fortest_assert, only: assert_equal
@@ -6,6 +17,7 @@ module test_math_ops_mod
    implicit none
 contains
 
+   !> @test Basic matrix multiplication A*B, checking two entries.
    subroutine test_mat_mul_basic(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -19,6 +31,7 @@ contains
       call assert_equal(t%C(2, 2), 46.0)
    end subroutine test_mat_mul_basic
 
+   !> @test Full matrix multiplication A*B, checking all four entries.
    subroutine test_mat_mul_full(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -34,6 +47,7 @@ contains
       call assert_equal(t%C(2, 2), 46.0)
    end subroutine test_mat_mul_full
 
+   !> @test Multiplication by identity matrix leaves input unchanged.
    subroutine test_mat_mul_identity(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -49,6 +63,7 @@ contains
       call assert_equal(t%C(2, 2), ts%A(2, 2))
    end subroutine test_mat_mul_identity
 
+   !> @test Multiplication by zero matrix yields all-zero result.
    subroutine test_mat_mul_zero(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -64,7 +79,7 @@ contains
       call assert_equal(t%C(2, 2), 0.0)
    end subroutine test_mat_mul_zero
 
-   !> @test Check that U x V matches the expected vector.
+   !> @test Cross product U × V matches expected reference vector.
    subroutine test_cross_product_expected(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -80,8 +95,7 @@ contains
       call assert_equal(t%W(3), ts%W_expected(3))
    end subroutine test_cross_product_expected
 
-
-   !> @test Cross product should be anti-commutative: U x V = -(V x U).
+   !> @test Cross product is anti-commutative: U×V = -(V×U).
    subroutine test_cross_product_anticommutative(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -98,7 +112,6 @@ contains
       call assert_equal(Wvu(2), -t%W(2))
       call assert_equal(Wvu(3), -t%W(3))
    end subroutine test_cross_product_anticommutative
-
 
    !> @test Cross product of parallel vectors should be zero vector.
    subroutine test_cross_product_parallel(t_ptr, ts_ptr, s_ptr)
@@ -120,8 +133,7 @@ contains
       call assert_equal(t%W(3), 0.0)
    end subroutine test_cross_product_parallel
 
-
-   !> @test Cross product result should be perpendicular to both inputs.
+   !> @test Cross product result is perpendicular to both inputs.
    subroutine test_cross_product_perpendicularity(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -140,7 +152,7 @@ contains
       call assert_equal(dot_v, 0.0)
    end subroutine test_cross_product_perpendicularity
 
-   !> @test Normalizing U should give a unit vector.
+   !> @test Normalized vector has unit length.
    subroutine test_normalize_vector_length(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -153,11 +165,10 @@ contains
       call normalize_vector(ts%U, U_norm)
       length = sqrt(sum(U_norm * U_norm))
 
-      call assert_equal(length, 1.0)
+      call assert_equal(length, 1.0, abs_tol=1.0e-5)
    end subroutine test_normalize_vector_length
 
-
-   !> @test Normalizing U and then scaling back should recover direction.
+   !> @test Normalization preserves direction of vector U.
    subroutine test_normalize_vector_direction(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -169,14 +180,12 @@ contains
 
       call normalize_vector(ts%U, U_norm)
 
-      ! Compare ratio of components (avoid divide by zero)
-      ratio = U_norm(1) / ts%U(1)
+      ratio = U_norm(1) / ts%U(1) ! safe since U(1) /= 0
       call assert_equal(U_norm(2), ts%U(2) * ratio)
       call assert_equal(U_norm(3), ts%U(3) * ratio)
    end subroutine test_normalize_vector_direction
 
-
-   !> @test Normalizing the zero vector should give [0,0,0].
+   !> @test Normalizing zero vector yields zero vector.
    subroutine test_normalize_zero_vector(t_ptr, ts_ptr, s_ptr)
       type(c_ptr), value :: t_ptr, ts_ptr, s_ptr
       type(test_fixture_t), pointer :: t
@@ -198,15 +207,19 @@ end module test_math_ops_mod
 
 
 !===========================================================
-! Driver Program
-!===========================================================
+!> @brief Driver program to run math operations tests.
+!>
+!> @details
+!> Initializes suite-level and test-level fixtures, registers
+!> all matrix, cross product, and normalization tests with Fortest,
+!> then executes the full test session.
 program test_math_ops
    use iso_c_binding, only: c_ptr, c_loc
    use fortest_test_session, only: test_session_t
    use test_math_ops_mod
    use math_ops_fixture, only: suite_fixture_t, test_fixture_t, &
-         setup_suite_fixture, teardown_suite_fixture, &
-         setup_test_fixture, teardown_test_fixture
+           setup_suite_fixture, teardown_suite_fixture, &
+           setup_test_fixture, teardown_test_fixture
    implicit none
 
    type(test_session_t) :: session
@@ -221,20 +234,21 @@ program test_math_ops
 
    ! Register suite-level fixture
    call session%register_fixture( &
-         setup = setup_suite_fixture, &
-         teardown = teardown_suite_fixture, &
-         args = suite_ptr, &
-         scope = "suite", &
-         test_suite_name = "matrix_mul_suite")
+           setup = setup_suite_fixture, &
+           teardown = teardown_suite_fixture, &
+           args = suite_ptr, &
+           scope = "suite", &
+           test_suite_name = "matrix_mul_suite")
 
    ! Register test-level fixture
    call session%register_fixture( &
-         setup = setup_test_fixture, &
-         teardown = teardown_test_fixture, &
-         args = test_ptr, &
-         scope = "test", &
-         test_suite_name = "matrix_mul_suite")
+           setup = setup_test_fixture, &
+           teardown = teardown_test_fixture, &
+           args = test_ptr, &
+           scope = "test", &
+           test_suite_name = "matrix_mul_suite")
 
+   ! Register all tests
    call session%register_test("matrix_mul_suite", "test_mat_mul_basic", test_mat_mul_basic)
    call session%register_test("matrix_mul_suite", "test_mat_mul_full", test_mat_mul_full)
    call session%register_test("matrix_mul_suite", "test_mat_mul_identity", test_mat_mul_identity)
@@ -246,7 +260,6 @@ program test_math_ops
    call session%register_test("matrix_mul_suite", "test_normalize_vector_length", test_normalize_vector_length)
    call session%register_test("matrix_mul_suite", "test_normalize_vector_direction", test_normalize_vector_direction)
    call session%register_test("matrix_mul_suite", "test_normalize_zero_vector", test_normalize_zero_vector)
-
 
    call session%run()
    call session%finalize()

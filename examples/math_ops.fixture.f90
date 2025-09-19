@@ -1,3 +1,11 @@
+!> @brief Math operations fixture module for Fortest.
+!>
+!> @details
+!> Provides suite-level and test-level fixtures for testing
+!> matrix and vector operations. The suite fixture contains
+!> constant data such as matrices and vectors used across all tests,
+!> while the test fixture provides scratch space that is reset
+!> before each individual test.
 module math_ops_fixture
    use iso_c_binding, only: c_ptr, c_f_pointer
    implicit none
@@ -5,13 +13,26 @@ module math_ops_fixture
    public :: setup_suite_fixture, teardown_suite_fixture
    public :: setup_test_fixture, teardown_test_fixture
 
-   ! Suite-level fixture: constants for all tests
+   !> @brief Suite-level fixture holding constants shared across all tests.
+   !>
+   !> @details
+   !> Includes:
+   !> - A, B: 2×2 test matrices
+   !> - I: identity matrix
+   !> - Z: zero matrix
+   !> - U, V: 3-element test vectors
+   !> - W_expected: expected result of U × V
    type :: suite_fixture_t
       real, allocatable :: A(:, :), B(:, :), I(:, :), Z(:, :)
       real, allocatable :: U(:), V(:), W_expected(:)
    end type suite_fixture_t
 
-   ! Test-level fixture: scratch data, reset before each test
+   !> @brief Test-level fixture providing scratch space.
+   !>
+   !> @details
+   !> Reset before each test run. Contains:
+   !> - C: 2×2 scratch matrix
+   !> - W: 3-element scratch vector
    type :: test_fixture_t
       real, allocatable :: C(:, :)
       real, allocatable :: W(:)
@@ -19,6 +40,12 @@ module math_ops_fixture
 
 contains
 
+   !> @brief Setup routine for test-level fixture.
+   !>
+   !> @param args C pointer to a test_fixture_t instance.
+   !>
+   !> Allocates a 2×2 scratch matrix `C` and a 3-element vector `W`,
+   !> initializing them to zero.
    subroutine setup_test_fixture(args)
       type(c_ptr), value :: args
       type(test_fixture_t), pointer :: fix
@@ -31,6 +58,11 @@ contains
       fix%W = 0.0
    end subroutine setup_test_fixture
 
+   !> @brief Teardown routine for test-level fixture.
+   !>
+   !> @param args C pointer to a test_fixture_t instance.
+   !>
+   !> Deallocates the scratch matrix `C` and vector `W`.
    subroutine teardown_test_fixture(args)
       type(c_ptr), value :: args
       type(test_fixture_t), pointer :: fix
@@ -40,6 +72,16 @@ contains
       if (allocated(fix%W)) deallocate(fix%W)
    end subroutine teardown_test_fixture
 
+   !> @brief Setup routine for suite-level fixture.
+   !>
+   !> @param args C pointer to a suite_fixture_t instance.
+   !>
+   !> Allocates and initializes constant test data:
+   !> - Matrices A and B with fixed values
+   !> - Identity matrix I
+   !> - Zero matrix Z
+   !> - Vectors U and V
+   !> - Expected cross product result W_expected
    subroutine setup_suite_fixture(args)
       type(c_ptr), value :: args
       type(suite_fixture_t), pointer :: fix
@@ -62,6 +104,11 @@ contains
       fix%W_expected = [-3.0, 6.0, -3.0] ! U x V
    end subroutine setup_suite_fixture
 
+   !> @brief Teardown routine for suite-level fixture.
+   !>
+   !> @param args C pointer to a suite_fixture_t instance.
+   !>
+   !> Deallocates all matrices and vectors from the suite fixture.
    subroutine teardown_suite_fixture(args)
       type(c_ptr), value :: args
       type(suite_fixture_t), pointer :: fix

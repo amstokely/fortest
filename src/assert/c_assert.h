@@ -64,7 +64,7 @@ void c_assert_equal_double(const double expected, const double actual,
 /// @param abs_tol  Absolute tolerance.
 /// @param rel_tol  Relative tolerance.
 void c_assert_equal_float(const float expected, const float actual,
-                          const double abs_tol, const double rel_tol) {
+                          const float abs_tol, const float rel_tol) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
     assert->assert_equal(expected, actual, logger, abs_tol, rel_tol);
@@ -102,7 +102,7 @@ void c_assert_not_equal_double(const double expected, const double actual,
 /// @param abs_tol  Absolute tolerance.
 /// @param rel_tol  Relative tolerance.
 void c_assert_not_equal_float(const float expected, const float actual,
-                              const double abs_tol, const double rel_tol) {
+                              const float abs_tol, const float rel_tol) {
     auto logger = Fortest::GlobalLogger::instance();
     auto assert = Fortest::GlobalAssert::instance();
     assert->assert_not_equal(expected, actual, logger, abs_tol, rel_tol);
